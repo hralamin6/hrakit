@@ -23,11 +23,16 @@
         @livewireStyles
         @livewireScripts
 
+        <!-- CropperJS for Mary File cropper -->
+        <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.css">
+        <script defer src="https://unpkg.com/cropperjs@1.6.1/dist/cropper.min.js"></script>
+
         <!-- CSRF Token -->
         <meta name="csrf-token" content="{{ csrf_token() }}">
     </head>
 
     <body>
         @yield('body')
+        <x-toast />
     </body>
 </html>

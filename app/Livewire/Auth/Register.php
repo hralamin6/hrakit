@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Auth;
 
-use App\Providers\RouteServiceProvider;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -36,12 +35,12 @@ class Register extends Component
             'name' => $this->name,
             'password' => Hash::make($this->password),
         ]);
-
         event(new Registered($user));
 
         Auth::login($user, true);
 
-        return redirect()->intended(route('web.home'));
+      $this->redirect(route('web.home'), navigate: true);
+
     }
 
     public function render()

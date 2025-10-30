@@ -8,8 +8,8 @@
 }
 
 /* Include Tailwind CSS plugins for enhanced form styling and typography */
-@plugin '@tailwindcss/forms';
-@plugin '@tailwindcss/typography';
+/*@plugin '@tailwindcss/forms';*/
+/*@plugin '@tailwindcss/typography';*/
 
 /* Remove default red box-shadow on invalid form elements */
 input:invalid, textarea:invalid, select:invalid {
@@ -55,3 +55,11 @@ input:invalid, textarea:invalid, select:invalid {
 }
 
 
+@layer components {
+  [class*="input"] {
+    @apply !outline-none;
+  }
+  [class*="checkbox"] {
+    @apply !checkbox-sm !bg-base-100 !text-base-content;
+  }
+}

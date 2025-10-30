@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+//log a message every minute
+Artisan::command('log:message', function () {
+    \Log::info('This is a log message from the log:message command.');
+})->purpose('Log a message every minute')->everyMinute();
+

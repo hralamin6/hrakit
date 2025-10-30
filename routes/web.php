@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\LogoutController;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Passwords\Confirm;
 use App\Livewire\Auth\Passwords\Email;
@@ -52,11 +51,19 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('email/verify/{id}/{hash}', \App\Http\Controllers\VerifyEmailController::class)->middleware('signed')->name('verification.verify');
-    Route::livewire('/app/', 'app.dashboard')->name('app.dashboard');
-
-    Route::post('logout', LogoutController::class)
-        ->name('logout');
+  Route::livewire('/app/', 'app.dashboard')->name('app.dashboard');
+  Route::livewire('/app/profile/', 'app.profile')->name('app.profile')->middleware('password.confirm');
+  Route::livewire('/app/settings/', 'app.setting')->name('app.settings')->middleware('password.confirm');
 });
 
+Route::middleware('auth')->group(function () {
 
+
+
+  Route::get('email/verify/{id}/{hash}', \App\Http\Controllers\Auth\EmailVerificationController::class)
+    ->middleware('signed')
+    ->name('verification.verify');
+
+  Route::post('logout', \App\Http\Controllers\Auth\LogoutController::class)
+    ->name('logout');
+});

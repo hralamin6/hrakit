@@ -4,7 +4,7 @@
     <div class="font-sans antialiased">
 
     {{-- The navbar with `sticky` and `full-width` --}}
-    <x-nav sticky full-width>
+    <x-nav sticky full-width class="bg-base-100">
 
         <x-slot:brand>
             {{-- Drawer toggle for "main-drawer" --}}
@@ -18,7 +18,8 @@
 
         {{-- Right side actions --}}
         <x-slot:actions>
-            <x-button label="Messages" icon="o-envelope" link="###" class="btn-ghost btn-sm" responsive />
+          <x-theme-toggle class="btn btn-circle btn-ghost" x-cloak />
+          <x-button label="Messages" icon="o-envelope" link="###" class="btn-ghost btn-sm" responsive />
             <x-button label="Notifications" icon="o-bell" link="###" class="btn-ghost btn-sm" responsive />
         </x-slot:actions>
     </x-nav>
@@ -28,9 +29,9 @@
 
         {{-- This is a sidebar that works also as a drawer on small screens --}}
         {{-- Notice the `main-drawer` reference here --}}
-        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-200">
+        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100">
             @if ($user = auth()->user())
-                <x-card class="px-2 shadow-sm border border-base-300 bg-base-100 dark:bg-base-200 rounded-xl">
+                <x-card class="px-2 pb-3 bg-base-100 dark:bg-base-200 rounded-xl">
                     <div class="flex flex-row items-center justify-between gap-2">
                         <div class="flex items-center gap-2">
                             <x-avatar
@@ -41,7 +42,6 @@
 
                             <div>
                                 <h3 class="font-semibold text-base-content/90">{{ $user->name }}</h3>
-                                <p class="text-sm text-base-content/70">{{ $user->email }}</p>
                             </div>
                         </div>
 
@@ -54,16 +54,19 @@
                     </div>
                 </x-card>
 
-                <x-menu-separator class="my-3 opacity-70" />
+                <x-menu-separator class="opacity-70" />
             @endif
 
 
             {{-- Activates the menu item when a route matches the `link` property --}}
             <x-menu activate-by-route>
-                <x-menu-item :title="__('Dashboard')" icon="o-home" :link="route('app.dashboard')" />
+                <x-menu-item :title="__('Dashboard')" icon="o-home" :link="route('app.dashboard')" route="app.dashboard" />
+                <x-menu-item :title="__('Profile')" icon="o-user-circle" :link="route('app.profile')" route="app.profile"/>
                 <x-menu-item title="Messages" icon="o-envelope" link="###" />
                 <x-menu-sub title="Settings" icon="o-cog-6-tooth">
-                    <x-menu-item title="Wifi" icon="o-wifi" link="####" />
+                  <x-menu-item :title="__('Settings')" icon="o-user-circle" :link="route('app.settings')" route="app.settings"/>
+
+                  <x-menu-item title="Wifi" icon="o-wifi" link="####" />
                     <x-menu-item title="Archives" icon="o-archive-box" link="####" />
                 </x-menu-sub>
             </x-menu>
@@ -71,7 +74,7 @@
 
         {{-- The `$slot` goes here --}}
 {{--        @yield('content')--}}
-        <x-slot:content>
+        <x-slot:content class="bg-base-300 px-3 md:px-6 lg:px-8 py-6 min-h-[calc(100vh-4rem)]">
             {{ $slot }}
         </x-slot:content>
     </x-main>

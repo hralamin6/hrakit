@@ -8,55 +8,43 @@
             </a>
 
             <h2 class="mt-6 text-3xl font-bold text-base-content">
-                Sign in to your account
+               @lang(' Sign in to your account')
             </h2>
 
             @if (Route::has('register'))
                 <p class="mt-2 text-sm text-gray-600">
-                    Or
+                    @lang('Or')
                     <a wire:navigate href="{{ route('register') }}" class="text-primary hover:underline">
-                        create a new account
+                        @lang('create a new account')
                     </a>
                 </p>
             @endif
         </div>
 
         <x-card class="p-6">
-            <form wire:submit.prevent="authenticate" class="space-y-5">
-                <x-input
-                    label="Email Address"
-                    wire:model.lazy="email"
-                    type="email"
-                    required
-                    icon="o-envelope"
-                    placeholder="Enter your email"
+            <form wire:submit="authenticate" class="space-y-5">
+                <x-input :label="__('Email Address')" wire:model.lazy="email" type="email" required icon="o-envelope" placeholder="Enter your email" x-init="$nextTick(() => $el.focus())"
                 />
 
-                <x-input
-                    label="Password"
-                    wire:model.lazy="password"
-                    type="password"
-                    required
-                    icon="o-lock-closed"
-                    placeholder="Enter your password"
+                <x-input :label="__('Password')" wire:model.lazy="password" type="password" required icon="o-lock-closed" placeholder="Enter your password"
                 />
 
                 <div class="flex items-center justify-between">
-                    <x-checkbox
-                        label="Remember"
+                    <x-checkbox class=""
+                        :label="__('Remember')"
                         wire:model.lazy="remember"
                     />
 
                     <a wire:navigate href="{{ route('password.request') }}" class="text-sm text-primary hover:underline">
-                        Forgot your password?
+                        @lang('Forgot your password?')
                     </a>
                 </div>
-                <x-button type="submit" class="w-full" color="primary">
-                    Sign in
+                <x-button spinner="authenticate" type="submit" class="w-full btn btn-primary" color="primary">
+                    @lang('Sign in')
                 </x-button>
             </form>
             <div class="flex justify-center gap-4 mt-6">
-                <x-button  wire:click="quickLogin('admin')" icon="o-user-circle" class="btn-primary btn-md capitalize shadow-sm hover:shadow-md transition duration-150">
+                <x-button  wire:click="quickLogin('admin')" icon="o-user-circle" class="btn-accent btn-md capitalize shadow-sm hover:shadow-md transition duration-150">
                     @lang('Admin')
                 </x-button>
 

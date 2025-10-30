@@ -43,7 +43,7 @@ class Login extends Component
             return;
         }
 
-        return redirect()->intended(route('web.home'));
+      $this->redirect(route('web.home'), navigate: true);
     }
 
     public function render()
