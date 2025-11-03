@@ -9,8 +9,8 @@ return [
     'backup_failed_subject' => 'Falha no backup da aplicação :application_name',
     'backup_failed_body' => 'Importante: Ocorreu um erro ao executar o backup da aplicação :application_name',
 
-    'backup_successful_subject' => 'Backup realizado com sucesso: :application_name',
-    'backup_successful_subject_title' => 'Backup Realizado com Sucesso!',
+    'backup_successful_subject' => 'Backups realizado com sucesso: :application_name',
+    'backup_successful_subject_title' => 'Backups Realizado com Sucesso!',
     'backup_successful_body' => 'Boas notícias, foi criado um novo backup no disco :disk_name referente à aplicação :application_name.',
 
     'cleanup_failed_subject' => 'Falha na limpeza dos backups da aplicação :application_name.',

@@ -35,7 +35,7 @@ return [
 
     'no_backups_info' => 'No backups were made yet',
     'application_name' => 'Application name',
-    'backup_name' => 'Backup name',
+    'backup_name' => 'Backups name',
     'disk' => 'Disk',
     'newest_backup_size' => 'Newest backup size',
     'number_of_backups' => 'Number of backups',

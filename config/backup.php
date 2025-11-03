@@ -192,7 +192,7 @@ return [
      * For Slack you need to install laravel/slack-notification-channel.
      *
      * You can also use your own notification classes, just make sure the class is named after one of
-     * the `Spatie\Backup\Notifications\Notifications` classes.
+     * the `Spatie\Backups\Notifications\Notifications` classes.
      */
     'notifications' => [
         'notifications' => [
@@ -267,8 +267,8 @@ return [
             'name' => 'name of the second app',
             'disks' => ['local', 's3'],
             'health_checks' => [
-                \Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class => 1,
-                \Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes::class => 5000,
+                \Spatie\Backups\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class => 1,
+                \Spatie\Backups\Tasks\Monitor\HealthChecks\MaximumStorageInMegabytes::class => 5000,
             ],
         ],
         */

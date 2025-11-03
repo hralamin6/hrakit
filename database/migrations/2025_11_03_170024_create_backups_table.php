@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('backups', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('disk');
-            $table->string('path');
+            $table->string('name')->nullable(); // Made nullable - set by backup job
+            $table->string('disk')->nullable(); // Made nullable - set by backup job
+            $table->string('path')->nullable(); // Made nullable - set by backup job
             $table->string('type'); // 'manual', 'scheduled', 'auto'
             $table->string('status')->default('pending'); // 'pending', 'running', 'completed', 'failed'
             $table->bigInteger('file_size')->nullable();

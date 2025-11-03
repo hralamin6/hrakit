@@ -59,7 +59,7 @@ class TestNotifications extends Command
 
             // Success alert
             $user->notify(new SystemAlertNotification(
-                'Backup Completed',
+                'Backups Completed',
                 'Your data backup has been completed successfully.',
                 'success'
             ));

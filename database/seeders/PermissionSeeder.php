@@ -32,6 +32,9 @@ class PermissionSeeder extends Seeder
             'activity' => [
                 'activity.dashboard', 'activity.feed', 'activity.delete', 'activity.my',
             ],
+            'backup' => [
+                'backups.view', 'backups.create', 'backups.download', 'backups.delete', 'backups.manage-schedules', 'backups.cleanup',
+              ],
         ];
 
         // Create permissions

@@ -15,7 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
   Route::livewire('/app/settings/', 'app.setting')->name('app.settings');
   Route::livewire('/app/roles/', 'app.role')->name('app.roles');
   Route::livewire('/app/users/', 'app.user')->name('app.users');
-  Route::livewire('/app/backups/', 'app.backup')->name('app.backups');
+  Route::livewire('/app/backups/', 'app.backups')->name('app.backups');
 
   Route::livewire('/app/notifications/', 'app.notifications')->name('app.notifications');
 

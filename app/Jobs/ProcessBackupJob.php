@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Backup;
 use App\Models\User;
-use App\Events\UserNotificationEvent;
+use App\Notifications\BackupNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,13 +33,15 @@ class ProcessBackupJob implements ShouldQueue
 
             // Generate unique filename
             $timestamp = now()->format('Y-m-d_H-i-s');
-            $filename = "backup_{$timestamp}.zip";
+            $type = '';
 
-            $this->backup->update([
-                'name' => $filename,
-                'path' => "backups/{$filename}",
-                'disk' => 'local'
-            ]);
+            if (isset($this->options['only_db']) && $this->options['only_db']) {
+                $type = '_database';
+            } elseif (isset($this->options['only_files']) && $this->options['only_files']) {
+                $type = '_files';
+            }
+
+            $filename = "backup{$type}_{$timestamp}.zip";
 
             // Build artisan command
             $command = 'backup:run';
@@ -61,20 +63,30 @@ class ProcessBackupJob implements ShouldQueue
             $exitCode = Artisan::call($command, $commandOptions);
 
             if ($exitCode === 0) {
-                // Get file size
-                $filePath = $this->backup->path;
-                $fileSize = null;
+                // The spatie backup package stores files in: storage/app/{APP_NAME}/
+                $appName = config('backup.backup.name');
+                $backupPath = "{$appName}/{$filename}";
 
-                if (Storage::disk('local')->exists($filePath)) {
-                    $fileSize = Storage::disk('local')->size($filePath);
+                // Check if file exists
+                if (Storage::disk('local')->exists($backupPath)) {
+                    $fileSize = Storage::disk('local')->size($backupPath);
+
+                    $this->backup->update([
+                        'name' => $filename,
+                        'path' => $backupPath,
+                        'disk' => 'local'
+                    ]);
+
+                    $this->backup->markAsCompleted($fileSize);
+
+                    // Send success notification
+                    $this->sendNotification('success');
+                } else {
+                    throw new \Exception('Backup file was not created at expected location: ' . $backupPath);
                 }
-
-                $this->backup->markAsCompleted($fileSize);
-
-                // Send success notification
-                $this->sendNotification('success');
             } else {
-                throw new \Exception('Backup command failed with exit code: ' . $exitCode);
+                $output = Artisan::output();
+                throw new \Exception('Backup command failed with exit code: ' . $exitCode . '. Output: ' . $output);
             }
 
         } catch (\Exception $e) {
@@ -100,24 +112,7 @@ class ProcessBackupJob implements ShouldQueue
         $user = User::find($this->backup->created_by);
         if (!$user) return;
 
-        $title = $status === 'success'
-            ? 'Backup Completed Successfully'
-            : 'Backup Failed';
-
-        $message = $status === 'success'
-            ? "Backup '{$this->backup->name}' completed successfully. Size: {$this->backup->formatted_file_size}"
-            : "Backup '{$this->backup->name}' failed. Error: " . ($errorMessage ?? 'Unknown error');
-
-        event(new UserNotificationEvent(
-            $user,
-            $title,
-            $message,
-            'backup',
-            [
-                'backup_id' => $this->backup->id,
-                'status' => $status,
-                'url' => route('app.backups')
-            ]
-        ));
+        // Send notification instead of broadcasting event
+        $user->notify(new BackupNotification($this->backup, $status, $errorMessage));
     }
 }

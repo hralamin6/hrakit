@@ -6,7 +6,7 @@ return [
     'exception_message_title' => 'Fejlbesked',
     'exception_trace_title' => 'Fejl trace',
 
-    'backup_failed_subject' => 'Backup af :application_name fejlede',
+    'backup_failed_subject' => 'Backups af :application_name fejlede',
     'backup_failed_body' => 'Vigtigt: Der skete en fejl under backup af :application_name',
 
     'backup_successful_subject' => 'Ny backup af :application_name oprettet',
@@ -17,7 +17,7 @@ return [
     'cleanup_failed_body' => 'Der skete en fejl under oprydning af backups for :application_name',
 
     'cleanup_successful_subject' => 'Oprydning af backups for :application_name gennemført',
-    'cleanup_successful_subject_title' => 'Backup oprydning gennemført!',
+    'cleanup_successful_subject_title' => 'Backups oprydning gennemført!',
     'cleanup_successful_body' => 'Oprydningen af backups for :application_name på disken :disk_name er gennemført.',
 
     'healthy_backup_found_subject' => 'Alle backups for :application_name på disken :disk_name er OK',
@@ -27,7 +27,7 @@ return [
     'unhealthy_backup_found_subject' => 'Vigtigt: Backups for :application_name fejlbehæftede',
     'unhealthy_backup_found_subject_title' => 'Vigtigt: Backups for :application_name er fejlbehæftede. :problem',
     'unhealthy_backup_found_body' => 'Backups for :application_name på disken :disk_name er fejlbehæftede.',
-    'unhealthy_backup_found_not_reachable' => 'Backup destinationen kunne ikke findes. :error',
+    'unhealthy_backup_found_not_reachable' => 'Backups destinationen kunne ikke findes. :error',
     'unhealthy_backup_found_empty' => 'Denne applikation har ingen backups overhovedet.',
     'unhealthy_backup_found_old' => 'Den seneste backup fra :date er for gammel.',
     'unhealthy_backup_found_unknown' => 'Beklager, en præcis årsag kunne ikke findes.',
@@ -35,7 +35,7 @@ return [
 
     'no_backups_info' => 'Der blev ikke foretaget nogen sikkerhedskopier endnu',
     'application_name' => 'Applikationens navn',
-    'backup_name' => 'Backup navn',
+    'backup_name' => 'Backups navn',
     'disk' => 'Disk',
     'newest_backup_size' => 'Nyeste backup-størrelse',
     'number_of_backups' => 'Antal sikkerhedskopier',

@@ -81,10 +81,21 @@ class Backup extends Model
         return $this->started_at->diffForHumans($this->completed_at, true);
     }
 
+    public function getDisplayNameAttribute()
+    {
+        return $this->name ?: 'Backup #' . $this->id;
+    }
+
     // Methods
     public function exists(): bool
     {
-        return Storage::disk($this->disk)->exists($this->path);
+        if (!$this->disk || !$this->path) return false;
+
+        try {
+            return Storage::disk($this->disk)->exists($this->path);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function download()
@@ -93,18 +104,28 @@ class Backup extends Model
             throw new \Exception('Backup file not found');
         }
 
-        return Storage::disk($this->disk)->download($this->path, $this->name);
+        $downloadName = $this->name ?: 'backup_' . $this->id . '.zip';
+        return Storage::disk($this->disk)->download($this->path, $downloadName);
     }
 
-    public function delete(): bool
+    protected static function booted()
     {
-        // Delete physical file first
-        if ($this->exists()) {
-            Storage::disk($this->disk)->delete($this->path);
-        }
-
-        // Delete record
-        return parent::delete();
+        static::deleting(function ($backup) {
+            // Delete physical file when model is being deleted
+            if ($backup->disk && $backup->path) {
+                try {
+                    if (Storage::disk($backup->disk)->exists($backup->path)) {
+                        Storage::disk($backup->disk)->delete($backup->path);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to delete backup file: ' . $e->getMessage(), [
+                        'backup_id' => $backup->id,
+                        'path' => $backup->path,
+                        'disk' => $backup->disk
+                    ]);
+                }
+            }
+        });
     }
 
     public function markAsStarted()

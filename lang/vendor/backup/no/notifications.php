@@ -6,7 +6,7 @@ return [
     'exception_message_title' => 'Exception',
     'exception_trace_title' => 'Exception trace',
 
-    'backup_failed_subject' => 'Backup feilet for :application_name',
+    'backup_failed_subject' => 'Backups feilet for :application_name',
     'backup_failed_body' => 'Viktg: En feil oppstod under backing av :application_name',
 
     'backup_successful_subject' => 'Gjennomført backup av :application_name',
