@@ -29,6 +29,9 @@ class PermissionSeeder extends Seeder
             'profile' => [
                 'profile.update',
             ],
+            'activity' => [
+                'activity.dashboard', 'activity.feed', 'activity.delete', 'activity.my',
+            ],
         ];
 
         // Create permissions
@@ -57,14 +60,15 @@ class PermissionSeeder extends Seeder
             'settings.view', 'settings.update',
             'media.view', 'media.upload',
             'profile.update',
+            'activity.dashboard', 'activity.feed', 'activity.delete',
         ])->get();
         $admin->syncPermissions($adminPerms);
 
         $userPerms = Permission::whereIn('name', [
             'dashboard.view',
             'profile.update',
+            'activity.my',
         ])->get();
         $user->syncPermissions($userPerms);
     }
 }
-

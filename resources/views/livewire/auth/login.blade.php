@@ -67,7 +67,7 @@
                     <span class="ml-2">@lang('Login with Google')</span>
                 </x-button>
 
-                <x-button
+                <x-button  no-wire-navigate
                         tag="a"
                         link="{{ route('socialite.auth', 'github') }}"
                         icon="fab.github"

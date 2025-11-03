@@ -24,6 +24,14 @@ class SocialiteController extends Controller
             ['email' => $response->getEmail()],
             ['password' => \Hash::make('pass'), 'name' => $response->getName() ?? $response->getNickname()]
         );
+        // if email not verified, mark as verified
+        if (!$user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+        }
+        if (!$user->roles()->exists()){
+            $user->assignRole('user');
+        }
+        $user->assignRole('user');
         if ($response->getAvatar()){
             $extension = pathinfo(parse_url($response->getAvatar(), PHP_URL_PATH), PATHINFO_EXTENSION);
             $media = $user->addMediaFromUrl($response->getAvatar())->usingFileName($response->getName() ?? $response->getNickname(). '.' . $extension)->toMediaCollection('profile');

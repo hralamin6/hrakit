@@ -32,7 +32,7 @@ class User extends Component
     public string $email = '';
     public string $password = '';
     public string $password_confirmation = '';
-    public array $roles = []; // role names
+    public array $selectedRoles = []; // role IDs for x-choices component
 
     // UI
     public bool $showForm = false;
@@ -60,13 +60,19 @@ class User extends Component
                 Rule::unique('users', 'email')->ignore($this->selectedUserId)
             ],
             'password' => $passwordRules,
-            'roles' => ['array'],
+            'selectedRoles' => ['array'],
+            'selectedRoles.*' => ['integer', 'exists:roles,id'],
         ];
     }
 
     public function updatingSearch(): void { $this->resetPage(); }
     public function updatingPerPage(): void { $this->resetPage(); }
     public function updatingRoleFilter(): void { $this->resetPage(); }
+
+    public function mount(): void
+    {
+        $this->authorize('users.view');
+    }
 
     public function sortBy(string $field): void
     {
@@ -81,26 +87,36 @@ class User extends Component
 
     public function create(): void
     {
-        $this->reset(['selectedUserId', 'name', 'email', 'password', 'password_confirmation', 'roles']);
+        $this->authorize('users.create');
+
+        $this->reset(['selectedUserId', 'name', 'email', 'password', 'password_confirmation', 'selectedRoles']);
         $this->isEditing = false;
         $this->showForm = true;
     }
 
     public function edit(int $id): void
     {
+        $this->authorize('users.update');
+
         $user = UserModel::query()->with('roles')->findOrFail($id);
         $this->selectedUserId = $user->id;
         $this->name = (string) $user->name;
         $this->email = (string) $user->email;
         $this->password = '';
         $this->password_confirmation = '';
-        $this->roles = $user->roles->pluck('name')->values()->all();
+        $this->selectedRoles = $user->roles->pluck('id')->values()->all();
         $this->isEditing = true;
         $this->showForm = true;
     }
 
     public function save(): void
     {
+        if ($this->isEditing) {
+            $this->authorize('users.update');
+        } else {
+            $this->authorize('users.create');
+        }
+
         $this->validate();
 
         if ($this->isEditing && $this->selectedUserId) {
@@ -121,12 +137,14 @@ class User extends Component
         }
 
         // Sync roles
-        $roles = Role::query()->whereIn('name', $this->roles)->pluck('name')->all();
-        $user->syncRoles($roles);
+        if (auth()->user()->can('users.assign-roles')) {
+            $roles = Role::query()->whereIn('id', $this->selectedRoles)->pluck('name')->all();
+            $user->syncRoles($roles);
+        }
 
         $this->success('User saved successfully.', position: 'toast-bottom');
         $this->showForm = false;
-        $this->reset(['selectedUserId', 'name', 'email', 'password', 'password_confirmation', 'roles', 'isEditing']);
+        $this->reset(['selectedUserId', 'name', 'email', 'password', 'password_confirmation', 'selectedRoles', 'isEditing']);
         $this->resetPage();
     }
 
@@ -134,6 +152,8 @@ class User extends Component
 
     public function deleteConfirmed(): void
     {
+        $this->authorize('users.delete');
+
         if (!$this->confirmingDeleteId) return;
         $user = UserModel::findOrFail($this->confirmingDeleteId);
         // Guard against deleting yourself
@@ -153,9 +173,23 @@ class User extends Component
         return Role::query()
             ->orderBy('name')
             ->get()
-            ->map(fn ($r) => ['id' => $r->name, 'name' => $r->name])
-            ->values()
-            ->all();
+            ->map(fn ($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+            ])
+            ->toArray();
+    }
+
+    public function getAllRolesProperty(): array
+    {
+        return Role::query()
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+            ])
+            ->toArray();
     }
 
     public function render()

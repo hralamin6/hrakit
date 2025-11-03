@@ -3,11 +3,13 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\LogsActivity;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -17,7 +19,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements HasMedia, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, InteractsWithMedia, HasRoles;
+    use HasFactory, Notifiable, InteractsWithMedia, HasRoles, HasPushSubscriptions, LogsActivity;
 
     /**
      * The attributes that are mass assignable.
@@ -28,6 +30,7 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
         'name',
         'email',
         'password',
+      'email_verified_at'
     ];
     public function registerMediaCollections(): void
     {
@@ -75,4 +78,47 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
         ];
     }
 
+    /**
+     * Get the user's notification preferences.
+     */
+    public function notificationPreferences()
+    {
+        return $this->hasMany(\App\Models\NotificationPreference::class);
+    }
+
+    /**
+     * Get notification preference for a specific category.
+     */
+    public function getNotificationPreference(string $category = 'general')
+    {
+        return $this->notificationPreferences()
+            ->where('category', $category)
+            ->first() ?? $this->notificationPreferences()->create([
+                'category' => $category,
+            ]);
+    }
+
+    /**
+     * Check if push notifications are enabled for a category.
+     */
+    public function isPushEnabledFor(string $category = 'general'): bool
+    {
+        return $this->getNotificationPreference($category)->push_enabled ?? true;
+    }
+
+    /**
+     * Get all activities caused by this user.
+     */
+    public function activities()
+    {
+        return $this->morphMany(\App\Models\Activity::class, 'causer')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get activities where this user is the subject.
+     */
+    public function subjectActivities()
+    {
+        return $this->morphMany(\App\Models\Activity::class, 'subject')->orderBy('created_at', 'desc');
+    }
 }

@@ -1,0 +1,531 @@
+@props([
+	'label' => null,
+	'hint' => null,
+	'placeholder' => null,
+	'options' => [],
+	'selected' => null,
+	'multiple' => false,
+	'searchable' => true,
+	'clearable' => false,
+	'emptyMessage' => 'No results found.',
+	'modelClass' => null,
+	'modelValueField' => 'id',
+	'modelTextField' => 'name',
+	'modelOrderBy' => null,
+	'modelScopes' => null,
+])
+
+{{--
+	Advanced select component powered by Alpine.js.
+
+	Features:
+	- Supports Livewire bindings (`wire:model`, `wire:model.defer`, etc.).
+	- Optional Eloquent auto-loading via `modelClass`, `modelValueField`, `modelTextField`.
+	- Multi-select, search, and clear buttons controlled by component props.
+	- Falls back to a native `<select>` when JavaScript is unavailable.
+
+	Example:
+	<x-select-input
+		label="Select Role"
+		placeholder="Choose a role"
+		:multiple="true"
+		:searchable="true"
+		:clearable="true"
+		wire:model="roles"
+		model-class="Spatie\Permission\Models\Role"
+		model-value-field="id"
+		model-text-field="name"
+	/>
+--}}
+
+@php
+	$placeholder = $placeholder ?? ($multiple ? __('Select options') : __('Select an option'));
+	$valueField = $modelValueField ?: 'id';
+	$textField = $modelTextField ?: 'name';
+	$modelScopes = \Illuminate\Support\Arr::wrap($modelScopes);
+
+	$optionsCollection = collect($options);
+
+	if ($optionsCollection->isEmpty() && $modelClass && class_exists($modelClass) && method_exists($modelClass, 'query')) {
+		$query = $modelClass::query();
+
+		foreach ($modelScopes as $scope) {
+			if ($scope && method_exists($query->getModel(), $scope)) {
+				$query->{$scope}();
+			}
+		}
+
+		if ($modelOrderBy) {
+			foreach (\Illuminate\Support\Arr::wrap($modelOrderBy) as $order) {
+				if (is_array($order)) {
+					$query->orderBy($order[0] ?? $textField, $order[1] ?? 'asc');
+				} elseif (is_string($order) && str_contains($order, ':')) {
+					[$field, $direction] = explode(':', $order, 2);
+					$query->orderBy($field, strtolower($direction) === 'desc' ? 'desc' : 'asc');
+				} elseif (is_string($order)) {
+					$query->orderBy($order);
+				}
+			}
+		} else {
+			$query->orderBy($textField);
+		}
+
+		$optionsCollection = $query->get();
+	}
+
+	$normalizedOptions = $optionsCollection
+		->map(function ($option, $key) use ($valueField, $textField) {
+			if ($option instanceof \Illuminate\Database\Eloquent\Model) {
+				return [
+					'value' => (string) data_get($option, $valueField),
+					'label' => (string) data_get($option, $textField),
+					'disabled' => (bool) data_get($option, 'disabled', false),
+				];
+			}
+
+			if (is_array($option)) {
+				return [
+					'value' => (string) ($option['value'] ?? data_get($option, $valueField, data_get($option, 'id', $key))),
+					'label' => (string) ($option['label'] ?? data_get($option, $textField, data_get($option, 'name', $option['value'] ?? $key))),
+					'disabled' => (bool) ($option['disabled'] ?? false),
+				];
+			}
+
+			if (is_string($key) && (is_string($option) || is_numeric($option))) {
+				return [
+					'value' => (string) $key,
+					'label' => (string) $option,
+					'disabled' => false,
+				];
+			}
+
+			if (is_string($option) || is_numeric($option)) {
+				return [
+					'value' => (string) $option,
+					'label' => (string) $option,
+					'disabled' => false,
+				];
+			}
+
+			return null;
+		})
+		->filter(fn ($option) => filled($option['value'] ?? null) || $option['value'] === '0')
+		->unique('value')
+		->values();
+
+	$controlId = $attributes->get('id') ?? 'select-input-' . \Illuminate\Support\Str::uuid();
+	$selectId = $controlId . '-native';
+
+	$wireModelKey = collect($attributes->getAttributes())
+		->keys()
+		->first(fn ($key) => \Illuminate\Support\Str::startsWith($key, 'wire:model'));
+
+	$wireModelValue = $wireModelKey ? $attributes->get($wireModelKey) : null;
+
+	$nameAttribute = $attributes->get('name');
+	if (! $nameAttribute && $wireModelValue) {
+		$nameAttribute = str_replace(['.', '[', ']'], ['_', '.', ''], $wireModelValue);
+	}
+
+	if ($multiple && $nameAttribute && ! str_ends_with($nameAttribute, '[]')) {
+		$nameAttribute .= '[]';
+	}
+
+	$selectedValues = [];
+
+	if (! is_null($selected)) {
+		$selectedValues = \Illuminate\Support\Arr::wrap($selected);
+	} elseif ($attributes->has('value')) {
+		$selectedValues = \Illuminate\Support\Arr::wrap($attributes->get('value'));
+	} elseif ($nameAttribute) {
+		$oldKey = $multiple ? rtrim($nameAttribute, '[]') : $nameAttribute;
+		$oldValue = old($oldKey);
+
+		if (! is_null($oldValue)) {
+			$selectedValues = \Illuminate\Support\Arr::wrap($oldValue);
+		}
+	}
+
+	$selectedValues = array_map('strval', array_filter($selectedValues, fn ($value) => ! is_null($value) && $value !== ''));
+
+	if (! $multiple) {
+		$selectedValues = array_slice($selectedValues, 0, 1);
+	}
+
+	foreach ($selectedValues as $selectedValue) {
+		if (! $normalizedOptions->contains(fn ($option) => $option['value'] === $selectedValue)) {
+			$normalizedOptions->push([
+				'value' => $selectedValue,
+				'label' => $selectedValue,
+				'disabled' => false,
+			]);
+		}
+	}
+
+	$normalizedOptions = $normalizedOptions->unique('value')->values();
+
+	$wireAttributeKeys = array_keys($attributes->whereStartsWith('wire:')->getAttributes());
+	$containerAttributes = $attributes
+		->except(array_merge($wireAttributeKeys, ['id', 'name', 'value']))
+		->class(['form-control', 'w-full', 'gap-1']);
+
+	$alpineConfig = [
+		'multiple' => (bool) $multiple,
+		'clearable' => (bool) $clearable,
+		'searchable' => (bool) $searchable,
+		'placeholder' => $placeholder,
+		'emptyMessage' => $emptyMessage,
+		'options' => $normalizedOptions->map(fn ($option) => [
+			'value' => $option['value'],
+			'label' => $option['label'],
+			'disabled' => (bool) $option['disabled'],
+		])->values()->all(),
+		'selected' => $selectedValues,
+	];
+@endphp
+
+@once
+	<style>[x-cloak]{ display:none !important; }</style>
+@endonce
+
+@once
+	<script>
+		(function () {
+			// Register the Alpine component when Alpine is available.
+			function registerAlpineComponent() {
+				try {
+					if (!window.Alpine) return;
+					if (window.__larakitSelectRegistered) return;
+					window.__larakitSelectRegistered = true;
+
+					Alpine.data('larakitSelectInput', (config = {}) => ({
+						open: false,
+						search: '',
+						multiple: !!config.multiple,
+						clearable: !!config.clearable,
+						searchable: !!config.searchable,
+						placeholder: config.placeholder || '',
+						emptyMessage: config.emptyMessage || 'No results found.',
+						options: Array.isArray(config.options)
+							? config.options.map(option => ({
+								value: String(option.value ?? ''),
+								label: String(option.label ?? option.value ?? ''),
+								disabled: !!option.disabled,
+							})).filter(option => option.value !== '')
+							: [],
+						selectedValues: Array.isArray(config.selected)
+							? [...new Set(config.selected.map(value => String(value)))]
+							: [],
+						init() {
+							this.ensureSelectedOptionsExist();
+
+							this.$nextTick(() => {
+								if (this.$refs.native) {
+									this.$refs.native.classList.add('hidden');
+									const initial = this.getSelectedFromSelect();
+									if (initial.length) {
+										this.selectedValues = [...initial];
+									}
+									this.$refs.native.addEventListener('change', () => {
+										this.selectedValues = this.getSelectedFromSelect();
+										this.normalizeSelected();
+										this.ensureSelectedOptionsExist();
+									});
+								}
+							});
+
+							if (window.Livewire && typeof window.Livewire.hook === 'function') {
+								window.Livewire.hook('message.processed', (message, component) => {
+									if (this.$refs.native && component.el && component.el.contains(this.$refs.native)) {
+										this.selectedValues = this.getSelectedFromSelect();
+										this.normalizeSelected();
+										this.ensureSelectedOptionsExist();
+									}
+								});
+							}
+						},
+						normalizeSelected() {
+							this.selectedValues = [...new Set(this.selectedValues.map(value => String(value)))];
+						},
+						get hasSelection() {
+							return this.selectedValues.length > 0;
+						},
+						get filteredOptions() {
+							if (!this.searchable || !this.search.trim()) {
+								return this.options;
+							}
+
+							const term = this.search.toLowerCase();
+							return this.options.filter(option => option.label.toLowerCase().includes(term));
+						},
+						optionFor(value) {
+							value = String(value);
+							return this.options.find(option => String(option.value) === value);
+						},
+						labelFor(value) {
+							const option = this.optionFor(value);
+							return option ? option.label : value;
+						},
+						isSelected(value) {
+							value = String(value);
+							return this.selectedValues.includes(value);
+						},
+						selectOption(option) {
+							if (!option || option.disabled) {
+								return;
+							}
+
+							const value = String(option.value);
+
+							if (this.multiple) {
+								if (this.isSelected(value)) {
+									this.selectedValues = this.selectedValues.filter(item => item !== value);
+								} else {
+									this.selectedValues = [...this.selectedValues, value];
+								}
+							} else {
+								this.selectedValues = [value];
+								this.closeDropdown();
+							}
+
+							this.normalizeSelected();
+							this.ensureSelectedOptionsExist();
+							this.syncSelect();
+						},
+						removeValue(value) {
+							value = String(value);
+							this.selectedValues = this.selectedValues.filter(item => item !== value);
+							this.normalizeSelected();
+							this.syncSelect();
+						},
+						clearSelection() {
+							this.selectedValues = [];
+							this.syncSelect();
+						},
+						ensureSelectedOptionsExist() {
+							this.selectedValues.forEach(value => {
+								if (!this.optionFor(value)) {
+									this.options.push({
+										value,
+										label: value,
+										disabled: false,
+									});
+								}
+							});
+						},
+						getSelectedFromSelect() {
+							if (!this.$refs.native) {
+								return [];
+							}
+
+							return Array.from(this.$refs.native.options)
+								.filter(option => option.selected)
+								.map(option => String(option.value));
+						},
+						syncSelect() {
+							if (!this.$refs.native) {
+								return;
+							}
+
+							const values = this.selectedValues.map(String);
+
+							Array.from(this.$refs.native.options).forEach(option => {
+								option.selected = values.includes(String(option.value));
+							});
+
+							this.$refs.native.dispatchEvent(new Event('input', { bubbles: true }));
+							this.$refs.native.dispatchEvent(new Event('change', { bubbles: true }));
+						},
+						toggleDropdown() {
+							this.open = !this.open;
+
+							if (this.open && this.searchable) {
+								this.$nextTick(() => this.$refs.search && this.$refs.search.focus());
+							}
+						},
+						openDropdown() {
+							if (!this.open) {
+								this.toggleDropdown();
+							}
+						},
+						closeDropdown() {
+							this.open = false;
+							this.search = '';
+						},
+					}));
+				} catch (e) {
+					// swallow registration errors to avoid breaking the page
+					console.warn('larakitSelectInput Alpine registration failed', e);
+				}
+			}
+
+			// Prefer existing Alpine (including Livewire's bundled Alpine). If missing, load Alpine and register.
+			if (window.Alpine) {
+				registerAlpineComponent();
+			} else if (window.Livewire && (window.Livewire.alpine || window.Livewire.Alpine)) {
+				window.Alpine = window.Livewire.alpine || window.Livewire.Alpine;
+				registerAlpineComponent();
+			} else {
+				var s = document.createElement('script');
+				s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.5/dist/cdn.min.js';
+				s.defer = true;
+				s.onload = function () {
+					registerAlpineComponent();
+				};
+				document.head.appendChild(s);
+			}
+		})();
+	</script>
+@endonce
+
+<div
+	{{ $containerAttributes }}
+	x-data="larakitSelectInput(@js($alpineConfig))"
+	x-init="init()"
+	@keydown.escape.window="closeDropdown()"
+>
+	@if ($label)
+		<label for="{{ $controlId }}" class="label">
+			<span class="label-text font-semibold">{{ $label }}</span>
+		</label>
+	@endif
+
+	<div class="relative" @click.outside="closeDropdown()">
+		<select
+			x-ref="native"
+			id="{{ $selectId }}"
+			class="select select-bordered w-full"
+			{{ $multiple ? 'multiple' : '' }}
+			@if ($nameAttribute) name="{{ $nameAttribute }}" @endif
+			{{ $attributes->whereStartsWith('wire:') }}
+		>
+			@if (! $multiple)
+				<option value="">{{ $placeholder }}</option>
+			@endif
+
+			@foreach ($normalizedOptions as $option)
+				<option
+					value="{{ $option['value'] }}"
+					@if (in_array($option['value'], $selectedValues, true)) selected @endif
+					@if ($option['disabled']) disabled @endif
+				>
+					{{ $option['label'] }}
+				</option>
+			@endforeach
+		</select>
+
+		<div x-cloak>
+			<div
+				id="{{ $controlId }}"
+				class="input input-bordered w-full min-h-12 flex flex-wrap items-center gap-2 pr-9 cursor-pointer bg-base-100"
+				:class="{'ring ring-primary ring-offset-1 ring-offset-base-100': open}"
+				role="combobox"
+				:aria-expanded="open"
+				aria-haspopup="listbox"
+				aria-controls="{{ $controlId }}-listbox"
+				tabindex="0"
+				@click="toggleDropdown()"
+				@keydown.enter.prevent="toggleDropdown()"
+				@keydown.space.prevent="toggleDropdown()"
+				@keydown.arrow-down.prevent="openDropdown()"
+			>
+				<template x-if="multiple">
+					<div class="flex flex-wrap items-center gap-1 grow">
+						<template x-if="hasSelection">
+							<template x-for="value in selectedValues" :key="`tag-${value}`">
+								<span class="badge badge-outline badge-sm flex items-center gap-1">
+									<span class="max-w-[8rem] truncate" x-text="labelFor(value)"></span>
+									<button
+										type="button"
+										class="text-xs leading-none"
+										@click.stop="removeValue(value)"
+										aria-label="Remove option"
+									>
+										&times;
+									</button>
+								</span>
+							</template>
+						</template>
+						<span x-show="!hasSelection" class="text-base-content/60 text-sm">
+							<span x-text="placeholder"></span>
+						</span>
+					</div>
+				</template>
+
+				<template x-if="!multiple">
+					<div class="flex items-center gap-2 grow">
+						<span x-show="hasSelection" class="truncate text-sm" x-text="labelFor(selectedValues[0])"></span>
+						<span x-show="!hasSelection" class="text-base-content/60 text-sm">
+							<span x-text="placeholder"></span>
+						</span>
+					</div>
+				</template>
+
+				<button
+					type="button"
+					x-show="clearable && hasSelection"
+					@click.stop="clearSelection()"
+					class="ml-auto text-base-content/60 hover:text-error transition"
+					aria-label="Clear selection"
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+				</button>
+
+				<span class="pointer-events-none text-base-content/60 absolute right-3 top-1/2 -translate-y-1/2">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 9l6 6 6-6" />
+					</svg>
+				</span>
+			</div>
+
+			<div
+				x-show="open"
+				x-transition.origin.top
+				class="absolute z-50 mt-1 w-full rounded-box border border-base-300 bg-base-100 shadow-lg"
+			>
+				<div x-show="searchable" class="p-2 border-b border-base-200">
+					<input
+						x-ref="search"
+						type="search"
+						x-model="search"
+						class="input input-sm input-bordered w-full"
+						placeholder="Search..."
+					/>
+				</div>
+
+				<ul class="max-h-60 overflow-auto py-1" role="listbox" id="{{ $controlId }}-listbox" :aria-multiselectable="multiple">
+					<template x-for="option in filteredOptions" :key="`option-${option.value}`">
+						<li>
+							<button
+								type="button"
+								class="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-base-200"
+								:class="{
+									'bg-primary/10 text-primary': isSelected(option.value),
+									'opacity-60 cursor-not-allowed': option.disabled,
+								}"
+								:aria-selected="isSelected(option.value)"
+								:disabled="option.disabled"
+								@click.prevent="selectOption(option)"
+							>
+								<span class="truncate" x-text="option.label"></span>
+								<svg x-show="isSelected(option.value)" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m5 12 4 4 10-10" />
+								</svg>
+							</button>
+						</li>
+					</template>
+
+					<li x-show="!filteredOptions.length" class="px-3 py-4 text-sm text-base-content/60">
+						<span x-text="emptyMessage"></span>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	@if ($hint)
+		<span class="text-xs opacity-70">{{ $hint }}</span>
+	@endif
+</div>

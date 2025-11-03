@@ -3,6 +3,7 @@
 namespace App\Livewire\App;
 
 use App\Models\Setting as SettingModel;
+use EragLaravelPwa\Core\PWA;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -92,6 +93,7 @@ class Setting extends Component
 
   public function run()
   {
+    $this->authorize('settings.run-commands');
 
     try {
       Artisan::call($this->selectedCommand);
@@ -104,6 +106,8 @@ class Setting extends Component
   }
     public function mount(): void
     {
+      $this->authorize('settings.view');
+
       $this->availableCommands = collect([
         'cache:clear' => 'Clear Cache',
         'config:clear' => 'Clear Config Cache',
@@ -178,6 +182,8 @@ class Setting extends Component
 
     public function saveGeneral(): void
     {
+        $this->authorize('settings.update');
+
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -196,22 +202,15 @@ class Setting extends Component
         SettingModel::set('app.placeholder', $this->placeHolder);
         SettingModel::set('app.image_url', $this->image_url);
 
-        // Persist to .env
-        $this->writeEnv([
-            'APP_NAME' => $this->name,
-            'APP_EMAIL' => $this->email,
-            'APP_PHONE' => $this->phone,
-            'APP_ADDRESS' => $this->address,
-            'APP_DETAILS' => $this->details,
-            'APP_PLACEHOLDER' => $this->placeHolder,
-            'APP_IMAGE_URL' => $this->image_url,
-        ]);
+
 
         $this->success('General settings saved.', position: 'toast-bottom');
     }
 
     public function saveMail(): void
     {
+        $this->authorize('settings.update');
+
         $this->validate([
             'mailMailer' => ['required', 'string', 'max:255'],
             'mailHost' => ['nullable', 'string', 'max:255'],
@@ -249,6 +248,8 @@ class Setting extends Component
 
     public function saveOauth(): void
     {
+        $this->authorize('settings.update');
+
         $this->validate([
             'githubClientId' => ['nullable', 'string', 'max:255'],
             'githubClientSecret' => ['nullable', 'string', 'max:255'],
@@ -274,6 +275,8 @@ class Setting extends Component
 
     public function savePusher(): void
     {
+        $this->authorize('settings.update');
+
         $this->validate([
             'pusherAppId' => ['nullable', 'string', 'max:255'],
             'pusherAppKey' => ['nullable', 'string', 'max:255'],
@@ -314,6 +317,8 @@ class Setting extends Component
 
     public function saveAi(): void
     {
+        $this->authorize('settings.update');
+
         $this->validate([
             'openrouterApiKey' => ['nullable', 'string'],
             'openrouterBaseUrl' => ['nullable', 'url'],
@@ -348,6 +353,8 @@ class Setting extends Component
 
     public function saveBranding(): void
     {
+        $this->authorize('settings.update');
+
         // Upload optional images, or save URLs if provided
         $this->validate([
             'logoImage' => ['nullable', 'image', 'max:10240'],
@@ -370,16 +377,44 @@ class Setting extends Component
             $this->icon_url = $this->iconImageUrl;
         }
 
-        SettingModel::set('branding.logo_url', $this->logo_url);
-        SettingModel::set('branding.icon_url', $this->icon_url);
+        $logo = SettingModel::set('branding.logo_url', $this->logo_url);
+        $icon = SettingModel::set('branding.icon_url', $this->icon_url);
+
+        // Handle media uploads if images are present
+        if ($this->logoImage) {
+            $media = $logo->addMedia($this->logoImage->getRealPath())
+                ->usingFileName($logo->key . '.' . $this->logoImage->getClientOriginalExtension())
+                ->toMediaCollection('logo');
+            $path = storage_path("app/public/" . $media->id . '/' . $media->file_name);
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
+
+        if ($this->iconImage) {
+            $iconMedia = $icon->addMedia($this->iconImage->getRealPath())
+                ->usingFileName($icon->key . '.' . $this->iconImage->getClientOriginalExtension())
+                ->toMediaCollection('icon');
+        }
 
         // clear file inputs
         $this->reset(['logoImage', 'iconImage', 'logoImageUrl', 'iconImageUrl']);
 
-        // Persist to .env
-        $this->writeEnv([
-            'BRANDING_LOGO_URL' => $this->logo_url,
-            'BRANDING_ICON_URL' => $this->icon_url,
+        // Update PWA manifest with new branding
+        \EragLaravelPwa\Facades\PWA::update([
+            'name' => setting('app.name', 'Laravel PWA'),
+            'short_name' => substr(setting('app.name', 'LP'), 0, 12),
+            'background_color' => '#6777ef',
+            'display' => 'fullscreen',
+            'description' => setting('app.details', 'A Progressive Web Application setup for Laravel projects.'),
+            'theme_color' => '#6777ef',
+            'icons' => [
+                [
+                    'src' => $this->icon_url ?: getSettingImage('branding.icon_url', 'icon'),
+                    'sizes' => '512x512',
+                    'type' => 'image/png',
+                ],
+            ],
         ]);
 
         $this->success('Branding images saved.', position: 'toast-bottom');
@@ -387,6 +422,8 @@ class Setting extends Component
 
     public function saveApp(): void
     {
+        $this->authorize('settings.update');
+
         $this->validate([
             'appName' => ['required', 'string', 'max:255'],
             'appEnv' => ['nullable', 'string', 'max:50'],

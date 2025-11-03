@@ -27,7 +27,6 @@
     </div>
 
     <div class="lg:col-span-3 space-y-6">
-
       @if($tab === 'general')
         <x-card>
           <x-header title="General" subtitle="Basic organization and display settings." class="mb-5" />
@@ -42,13 +41,15 @@
             <x-input label="Hero/Image URL" icon="o-photo" wire:model.defer="image_url" type="url" placeholder="https://.../cover.jpg" />
 
             <x-textarea label="Address" wire:model.defer="address" rows="3" placeholder="Street, City, Country" />
-            <x-textarea label="Description/Details" wire:model.defer="details" rows="3" placeholder="Short description" />
+            <x-editor wire:model.defer="details" label="Description" hint="The full description" :config="config('editor.default')" />
             <x-textarea label="Placeholder Text" wire:model.defer="placeHolder" rows="2" placeholder="Shown as placeholder across UI" />
 
-            <div class="flex gap-2">
-              <x-button type="submit" spinner="saveGeneral" class="btn-primary" icon="o-check">Save</x-button>
-              <x-button type="button" class="btn-ghost" icon="o-arrow-path" wire:click="$refresh">Reset</x-button>
-            </div>
+            @can('settings.update')
+              <div class="flex gap-2">
+                <x-button type="submit" spinner="saveGeneral" class="btn-primary" icon="o-check">Save</x-button>
+                <x-button type="button" class="btn-ghost" icon="o-arrow-path" wire:click="$refresh">Reset</x-button>
+              </div>
+            @endcan
           </form>
         </x-card>
       @endif
@@ -67,9 +68,11 @@
               <x-input label="From Address" wire:model.defer="mailFromAddress" type="email" />
               <x-input label="From Name" wire:model.defer="mailFromName" />
             </div>
-            <div class="flex gap-2">
-              <x-button type="submit" spinner="saveMail" class="btn-primary" icon="o-check">Save</x-button>
-            </div>
+            @can('settings.update')
+              <div class="flex gap-2">
+                <x-button type="submit" spinner="saveMail" class="btn-primary" icon="o-check">Save</x-button>
+              </div>
+            @endcan
           </form>
         </x-card>
       @endif
@@ -89,9 +92,11 @@
               <x-input label="Client ID" wire:model.defer="googleClientId" />
               <x-input label="Client Secret" wire:model.defer="googleClientSecret" type="password" />
             </div>
-            <div class="flex gap-2 mt-4">
-              <x-button type="submit" spinner="saveOauth" class="btn-primary" icon="o-check">Save</x-button>
-            </div>
+            @can('settings.update')
+              <div class="flex gap-2 mt-4">
+                <x-button type="submit" spinner="saveOauth" class="btn-primary" icon="o-check">Save</x-button>
+              </div>
+            @endcan
           </form>
         </x-card>
       @endif
@@ -114,9 +119,11 @@
               <x-input label="VAPID Public Key" wire:model.defer="vapidPublicKey" />
               <x-input label="VAPID Private Key" wire:model.defer="vapidPrivateKey" type="password" />
             </div>
-            <div class="flex gap-2">
-              <x-button type="submit" spinner="savePusher" class="btn-primary" icon="o-check">Save</x-button>
-            </div>
+            @can('settings.update')
+              <div class="flex gap-2">
+                <x-button type="submit" spinner="savePusher" class="btn-primary" icon="o-check">Save</x-button>
+              </div>
+            @endcan
           </form>
         </x-card>
       @endif
@@ -148,9 +155,11 @@
                 <x-input label="Base URL" wire:model.defer="openaiBaseUrl" placeholder="https://api.openai.com/v1" class="md:col-span-2" />
               </div>
             </div>
-            <div class="flex gap-2">
-              <x-button type="submit" spinner="saveAi" class="btn-primary" icon="o-check">Save</x-button>
-            </div>
+            @can('settings.update')
+              <div class="flex gap-2">
+                <x-button type="submit" spinner="saveAi" class="btn-primary" icon="o-check">Save</x-button>
+              </div>
+            @endcan
           </form>
         </x-card>
       @endif
@@ -181,10 +190,12 @@
             </div>
           </div>
 
-          <div class="mt-4 flex flex-wrap gap-2">
-            <x-button class="btn-primary" icon="o-check" wire:click="saveBranding" spinner="saveBranding">Save images</x-button>
-            <x-button class="btn-ghost" icon="o-x-mark" wire:click="$set('logoImage', null); $set('iconImage', null); $set('logoImageUrl', ''); $set('iconImageUrl', '')">Clear</x-button>
-          </div>
+          @can('settings.update')
+            <div class="mt-4 flex flex-wrap gap-2">
+              <x-button class="btn-primary" icon="o-check" wire:click="saveBranding" spinner="saveBranding">Save images</x-button>
+              <x-button class="btn-ghost" icon="o-x-mark" wire:click="$set('logoImage', null); $set('iconImage', null); $set('logoImageUrl', ''); $set('iconImageUrl', '')">Clear</x-button>
+            </div>
+          @endcan
         </x-card>
       @endif
 
@@ -201,9 +212,11 @@
               <x-input label="Timezone" wire:model.defer="appTimezone" placeholder="UTC" />
               <x-input label="Queue Connection" wire:model.defer="queueConnection" placeholder="sync" />
             </div>
-            <div class="flex gap-2">
-              <x-button type="submit" spinner="saveApp" class="btn-primary" icon="o-check">Save</x-button>
-            </div>
+            @can('settings.update')
+              <div class="flex gap-2">
+                <x-button type="submit" spinner="saveApp" class="btn-primary" icon="o-check">Save</x-button>
+              </div>
+            @endcan
           </form>
         </x-card>
       @endif
@@ -211,72 +224,75 @@
     </div>
 
   </div>
-  <div class="space-y-6">
-    <x-card title="⚙️ Artisan Command Runner" class="shadow-xl">
 
-      <form wire:submit="run" class="space-y-4">
+  @can('settings.run-commands')
+    <div class="space-y-6">
+      <x-card title="⚙️ Artisan Command Runner" class="shadow-xl">
 
-        <div class="flex flex-col md:flex-row md:items-end gap-3">
+        <form wire:submit="run" class="space-y-4">
 
-          <div class="flex-grow">
-            <x-select
-              label="Select Command"
-              wire:model.live="selectedCommand"
-              :options="$availableCommands"
-              placeholder="Choose a command to execute..."
+          <div class="flex flex-col md:flex-row md:items-end gap-3">
+
+            <div class="flex-grow">
+              <x-select
+                label="Select Command"
+                wire:model.live="selectedCommand"
+                :options="$availableCommands"
+                placeholder="Choose a command to execute..."
+              />
+            </div>
+
+            <div>
+              <x-button
+
+                type="submit"
+                spinner="run"
+                class="w-full md:w-auto"
+                icon-right="o-play"
+                :disabled="!$selectedCommand"
+              >
+                Run Command
+              </x-button>
+            </div>
+          </div>
+        </form>
+
+        <x-hr />
+
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-sm font-semibold">Command Output</h3>
+            <x-button
+              wire:click="$set('output', null)"
+              icon="o-x-mark"
+              class="btn-xs btn-ghost"
+              :disabled="!$output"
             />
           </div>
 
-          <div>
-            <x-button
+          <div
+            @class([
+                'p-4 rounded-lg font-mono text-sm whitespace-pre-wrap min-h-[150px] transition-all',
+                'bg-gray-800 text-gray-400' => !$output, // Placeholder
+                'bg-gray-900 text-green-400' => $output,
+            ])
+          >
+            <div wire:loading.flex wire:target="run" class="items-center opacity-75">
+              <x-loading class="loading-spinner loading-xs mr-2" />
+              Executing `{{ $selectedCommand }}`...
+            </div>
 
-              type="submit"
-              spinner="run"
-              class="w-full md:w-auto"
-              icon-right="o-play"
-              :disabled="!$selectedCommand"
-            >
-              Run Command
-            </x-button>
+            <div wire:loading.remove wire:target="run">
+              @if ($output)
+                {!! nl2br(e($output)) !!}
+              @else
+                <span class="opacity-50">$ Output will appear here...</span>
+              @endif
+            </div>
           </div>
         </div>
-      </form>
-
-      <x-hr />
-
-      <div>
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="text-sm font-semibold">Command Output</h3>
-          <x-button
-            wire:click="$set('output', null)"
-            icon="o-x-mark"
-            class="btn-xs btn-ghost"
-            :disabled="!$output"
-          />
-        </div>
-
-        <div
-          @class([
-              'p-4 rounded-lg font-mono text-sm whitespace-pre-wrap min-h-[150px] transition-all',
-              'bg-gray-800 text-gray-400' => !$output, // Placeholder
-              'bg-gray-900 text-green-400' => $output,
-          ])
-        >
-          <div wire:loading.flex wire:target="run" class="items-center opacity-75">
-            <x-loading class="loading-spinner loading-xs mr-2" />
-            Executing `{{ $selectedCommand }}`...
-          </div>
-
-          <div wire:loading.remove wire:target="run">
-            @if ($output)
-              {!! nl2br(e($output)) !!}
-            @else
-              <span class="opacity-50">$ Output will appear here...</span>
-            @endif
-          </div>
-        </div>
-      </div>
-    </x-card>
-  </div>
+      </x-card>
+    </div>
+  @endcan
 </div>
 

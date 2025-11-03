@@ -52,15 +52,41 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
   Route::livewire('/app/', 'app.dashboard')->name('app.dashboard');
-  Route::livewire('/app/profile/', 'app.profile')->name('app.profile')->middleware('password.confirm');
-  Route::livewire('/app/settings/', 'app.setting')->name('app.settings')->middleware('password.confirm');
-  Route::livewire('/app/roles/', 'app.role')->name('app.roles')->middleware('password.confirm');
-  Route::livewire('/app/users/', 'app.user')->name('app.users')->middleware('password.confirm');
+  Route::livewire('/app/profile/', 'app.profile')->name('app.profile');
+  Route::livewire('/app/settings/', 'app.setting')->name('app.settings');
+  Route::livewire('/app/notifications/', 'app.notifications')->name('app.notifications');
+  Route::livewire('/app/notification-center/', 'app.notification-center')->name('app.notification-center');
+  Route::livewire('/app/notification-preferences/', 'app.notification-preferences')->name('app.notification-preferences');
+  Route::livewire('/app/roles/', 'app.role')->name('app.roles');
+  Route::livewire('/app/users/', 'app.user')->name('app.users');
+
+  // Activity Management Routes
+  Route::get('/app/activities/', \App\Livewire\App\ActivityDashboard::class)->name('app.activity.dashboard');
+  Route::get('/app/activities/feed/', \App\Livewire\App\ActivityFeed::class)->name('app.activity.feed');
+  Route::get('/app/activities/my/', \App\Livewire\App\MyActivities::class)->name('app.activity.my');
+  Route::get('/app/activities/clear/', \App\Livewire\App\ActivityClear::class)->name('app.activity.clear');
+
+  // Activity API routes
+  Route::prefix('api/activities')->group(function () {
+    Route::get('export', [\App\Http\Controllers\ActivityController::class, 'export'])->name('activity.export');
+    Route::get('stats', [\App\Http\Controllers\ActivityController::class, 'stats'])->name('activity.stats');
+    Route::post('{activity}/notify-admins', [\App\Http\Controllers\ActivityController::class, 'notifyAdmins'])->name('activity.notify-admins');
+    Route::post('clear', [\App\Http\Controllers\ActivityController::class, 'clear'])->name('activity.clear.api');
+  });
 });
 
 Route::middleware('auth')->group(function () {
+  // Push notification API routes
+  Route::post('api/push/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'subscribe'])->name('push.subscribe');
+  Route::get('api/push/status', [\App\Http\Controllers\PushSubscriptionController::class, 'status'])->name('push.status');
+  Route::get('api/push/status', [\App\Http\Controllers\PushSubscriptionController::class, 'status'])->name('push.status');
 
-
+  // Notification API routes
+  Route::prefix('api/notifications')->group(function () {
+    Route::get('unread-count', [\App\Http\Controllers\NotificationExampleController::class, 'getUnreadCount']);
+    Route::post('{id}/mark-read', [\App\Http\Controllers\NotificationExampleController::class, 'markAsRead']);
+  Route::post('api/push/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'subscribe'])->name('push.subscribe');
+  });
 
   Route::get('email/verify/{id}/{hash}', \App\Http\Controllers\Auth\EmailVerificationController::class)
     ->middleware('signed')
@@ -69,3 +95,6 @@ Route::middleware('auth')->group(function () {
   Route::post('logout', \App\Http\Controllers\Auth\LogoutController::class)
     ->name('logout');
 });
+
+// Public VAPID key endpoint
+Route::get('api/push/vapid-key', [\App\Http\Controllers\PushSubscriptionController::class, 'vapidPublicKey'])->name('push.vapid-key');

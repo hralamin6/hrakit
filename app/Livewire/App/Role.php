@@ -60,8 +60,15 @@ class Role extends Component
         $this->resetPage();
     }
 
+    public function mount(): void
+    {
+        $this->authorize('roles.view');
+    }
+
     public function create(): void
     {
+        $this->authorize('roles.create');
+
         $this->reset(['selectedRoleId', 'name', 'selectedPermissions']);
         $this->guard_name = 'web';
         $this->isEditing = false;
@@ -70,6 +77,8 @@ class Role extends Component
 
     public function edit(int $roleId): void
     {
+        $this->authorize('roles.update');
+
         $role = SpatieRole::query()->findOrFail($roleId);
         $this->selectedRoleId = $role->id;
         $this->name = (string) $role->name;
@@ -81,6 +90,12 @@ class Role extends Component
 
     public function save(): void
     {
+        if ($this->isEditing) {
+            $this->authorize('roles.update');
+        } else {
+            $this->authorize('roles.create');
+        }
+
         $this->validate();
 
         if ($this->isEditing && $this->selectedRoleId) {
@@ -105,11 +120,13 @@ class Role extends Component
         }
 
         // Sync permissions
-        $permissions = Permission::query()
-            ->whereIn('name', $this->selectedPermissions)
-            ->where('guard_name', $this->guard_name)
-            ->get();
-        $role->syncPermissions($permissions);
+        if (auth()->user()->can('roles.assign-permissions')) {
+            $permissions = Permission::query()
+                ->whereIn('name', $this->selectedPermissions)
+                ->where('guard_name', $this->guard_name)
+                ->get();
+            $role->syncPermissions($permissions);
+        }
 
         $this->success('Role saved successfully.', position: 'toast-bottom');
         $this->showForm = false;
@@ -124,6 +141,8 @@ class Role extends Component
 
     public function deleteConfirmed(): void
     {
+        $this->authorize('roles.delete');
+
         if (!$this->confirmingDeleteId) {
             return;
         }
@@ -144,6 +163,8 @@ class Role extends Component
 
     public function togglePermission(string $permissionName): void
     {
+        $this->authorize('roles.assign-permissions');
+
         if (!$this->selectedRoleId) {
             return;
         }

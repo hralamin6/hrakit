@@ -55,6 +55,8 @@ class Profile extends Component
 
     public function saveGeneral(): void
     {
+        $this->authorize('profile.update');
+
         $user = Auth::user();
 
         $validated = $this->validate([
@@ -94,6 +96,8 @@ class Profile extends Component
 
     public function savePassword(): void
     {
+        $this->authorize('profile.update');
+
         $user = Auth::user();
 
         $this->validate([
@@ -112,6 +116,8 @@ class Profile extends Component
 
     public function savePhoto(): void
     {
+        $this->authorize('profile.update');
+
         $user = Auth::user();
 
         $this->validate([
@@ -132,6 +138,8 @@ class Profile extends Component
 
     public function savePhotoFromUrl(): void
     {
+        $this->authorize('profile.update');
+
         $this->validate([
             'photo_url' => ['required', 'url', 'starts_with:https://,http://'],
         ]);
@@ -196,6 +204,8 @@ class Profile extends Component
 
     public function removePhoto(): void
     {
+        $this->authorize('profile.update');
+
         $user = Auth::user();
         $user->clearMediaCollection('profile');
         $this->reset(['photo', 'photo_url']);

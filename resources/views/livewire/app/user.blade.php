@@ -10,7 +10,9 @@
         <x-select label="Filter by role" wire:model.live="roleFilter" :options="array_merge([[ 'id' => null, 'name' => 'All roles' ]], $this->roleOptions)" />
       </div>
       <div class="flex items-end justify-end">
-        <x-button class="btn-primary" icon="o-plus" wire:click="create">New User</x-button>
+        @can('users.create')
+          <x-button class="btn-primary" icon="o-plus" wire:click="create">New User</x-button>
+        @endcan
       </div>
     </div>
 
@@ -27,7 +29,9 @@
             <th class="cursor-pointer" wire:click="sortBy('email')">Email</th>
             <th>Roles</th>
             <th class="cursor-pointer" wire:click="sortBy('created_at')">Created</th>
-            <th class="text-right">Actions</th>
+            @canany(['users.update', 'users.delete'])
+              <th class="text-right">Actions</th>
+            @endcanany
           </tr>
         </thead>
         <tbody>
@@ -43,10 +47,16 @@
                 @endforelse
               </td>
               <td class="text-sm text-base-content/70">{{ optional($u->created_at)->diffForHumans() }}</td>
-              <td class="text-right space-x-1">
-                <x-button class="btn-ghost btn-sm" icon="o-pencil-square" wire:click="edit({{ $u->id }})">Edit</x-button>
-                <x-button class="btn-ghost btn-sm text-error" icon="o-trash" wire:click="confirmDelete({{ $u->id }})">Delete</x-button>
-              </td>
+              @canany(['users.update', 'users.delete'])
+                <td class="text-right space-x-1">
+                  @can('users.update')
+                    <x-button class="btn-ghost btn-sm" icon="o-pencil-square" wire:click="edit({{ $u->id }})">Edit</x-button>
+                  @endcan
+                  @can('users.delete')
+                    <x-button class="btn-ghost btn-sm text-error" icon="o-trash" wire:click="confirmDelete({{ $u->id }})">Delete</x-button>
+                  @endcan
+                </td>
+              @endcanany
             </tr>
           @empty
             <tr><td colspan="5" class="text-center text-base-content/60 py-6">No users found.</td></tr>
@@ -69,15 +79,18 @@
         <x-input label="Password" wire:model.defer="password" type="password" :placeholder="$isEditing ? 'Leave blank to keep current' : ''" />
         <x-input label="Confirm Password" wire:model.defer="password_confirmation" type="password" />
       </div>
-      <div>
-        <x-select
+      @can('users.assign-roles')
+        <div>
+          <x-choices-offline
+{{--      class="outline-none"--}}
           label="Roles"
-          wire:model.live="roles"
-          :options="$this->roleOptions"
-          multiple
-          placeholder="Select roles..."
-        />
-      </div>
+          wire:model="selectedRoles"
+          :options="$this->allRoles"
+          placeholder="Search ..."
+          clearable
+          searchable />
+        </div>
+      @endcan
     </div>
     <x-slot:actions>
       <x-button class="btn-ghost" icon="o-x-mark" wire:click="$set('showForm', false)">Cancel</x-button>

@@ -4,10 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Setting extends Model
+class Setting extends Model implements HasMedia
 {
+  use InteractsWithMedia;
   protected $fillable = ['key', 'value'];
+  public function registerMediaCollections(): void
+  {
+    $this->addMediaCollection('logo')->singleFile()->registerMediaConversions(function (Media $media = null) {
+      $this->addMediaConversion('thumb')->quality('50')->nonQueued();
+    });
+    $this->addMediaCollection('icon')->singleFile()->registerMediaConversions(function (Media $media = null) {
+      $this->addMediaConversion('thumb')->quality('50')->nonQueued();
+    });
+  }
 
   public static function get($key, $default = null)
   {

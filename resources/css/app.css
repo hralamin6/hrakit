@@ -59,6 +59,10 @@ input:invalid, textarea:invalid, select:invalid {
   [class*="input"] {
     @apply !outline-none;
   }
+    [class*="choices-offline"] {
+    @apply !outline-none;
+  }
+
   [class*="checkbox"] {
     @apply !checkbox-sm !bg-base-100 !text-base-content;
   }

@@ -10,7 +10,9 @@
         <x-select label="Per page" wire:model.live="perPage" :options="[[ 'id' => 10, 'name' => '10' ], [ 'id' => 25, 'name' => '25' ], [ 'id' => 50, 'name' => '50' ]]" />
       </div>
       <div>
-        <x-button class="btn-primary" icon="o-plus" wire:click="create">New Role</x-button>
+        @can('roles.create')
+          <x-button class="btn-primary" icon="o-plus" wire:click="create">New Role</x-button>
+        @endcan
       </div>
     </div>
 
@@ -21,7 +23,9 @@
             <th class="whitespace-nowrap">Name</th>
             <th class="whitespace-nowrap">Guard</th>
             <th class="whitespace-nowrap">Permissions</th>
-            <th class="whitespace-nowrap text-right">Actions</th>
+            @canany(['roles.update', 'roles.delete'])
+              <th class="whitespace-nowrap text-right">Actions</th>
+            @endcanany
           </tr>
         </thead>
         <tbody>
@@ -32,10 +36,16 @@
             <td>
               <span class="badge badge-outline">{{ $role->permissions_count }}</span>
             </td>
-            <td class="text-right space-x-1">
-              <x-button class="btn-ghost btn-sm" icon="o-pencil-square" wire:click="edit({{ $role->id }})">Edit</x-button>
-              <x-button class="btn-ghost btn-sm text-error" icon="o-trash" wire:click="confirmDelete({{ $role->id }})">Delete</x-button>
-            </td>
+            @canany(['roles.update', 'roles.delete'])
+              <td class="text-right space-x-1">
+                @can('roles.update')
+                  <x-button class="btn-ghost btn-sm" icon="o-pencil-square" wire:click="edit({{ $role->id }})">Edit</x-button>
+                @endcan
+                @can('roles.delete')
+                  <x-button class="btn-ghost btn-sm text-error" icon="o-trash" wire:click="confirmDelete({{ $role->id }})">Delete</x-button>
+                @endcan
+              </td>
+            @endcanany
           </tr>
         @empty
           <tr>
@@ -57,33 +67,35 @@
         <x-input label="Guard" wire:model.defer="guard_name" disabled />
       </div>
 
-      <x-hr />
-      <div class="space-y-3">
-        <x-header title="Permissions" level="3" class="mb-2" />
-        @php($assigned = collect($selectedPermissions))
-        <div class="grid md:grid-cols-2 gap-4">
-          @forelse($this->permissions as $group => $items)
-            <x-card class="bg-base-100">
-              <div class="flex items-center justify-between mb-2">
-                <div class="font-semibold capitalize">{{ str_replace(['-', '_'], ' ', $group) }}</div>
-                <div class="space-x-2">
-                  <x-button class="btn-xs btn-ghost" wire:click="$set('selectedPermissions', array_values(array_unique(array_merge((array)$selectedPermissions, \Spatie\\Permission\\Models\\Permission::where('guard_name', $guard_name)->whereIn('name', (array) $items)->pluck('name')->toArray()))))">All</x-button>
+      @can('roles.assign-permissions')
+        <x-hr />
+        <div class="space-y-3">
+          <x-header title="Permissions" level="3" class="mb-2" />
+          @php($assigned = collect($selectedPermissions))
+          <div class="grid md:grid-cols-2 gap-4">
+            @forelse($this->permissions as $group => $items)
+              <x-card class="bg-base-100">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="font-semibold capitalize">{{ str_replace(['-', '_'], ' ', $group) }}</div>
+                  <div class="space-x-2">
+                    <x-button class="btn-xs btn-ghost" wire:click="$set('selectedPermissions', array_values(array_unique(array_merge((array)$selectedPermissions, \Spatie\\Permission\\Models\\Permission::where('guard_name', $guard_name)->whereIn('name', (array) $items)->pluck('name')->toArray()))))">All</x-button>
+                  </div>
                 </div>
-              </div>
-              <div class="space-y-1">
-                @foreach($items as $perm)
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" class="checkbox checkbox-sm" value="{{ $perm }}" wire:model.live="selectedPermissions">
-                    <span class="text-sm">{{ $perm }}</span>
-                  </label>
-                @endforeach
-              </div>
-            </x-card>
-          @empty
-            <div class="col-span-2 text-sm text-base-content/60">No permissions defined. Seed or create permissions first.</div>
-          @endforelse
+                <div class="space-y-1">
+                  @foreach($items as $perm)
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" class="checkbox checkbox-sm" value="{{ $perm }}" wire:model.live="selectedPermissions">
+                      <span class="text-sm">{{ $perm }}</span>
+                    </label>
+                  @endforeach
+                </div>
+              </x-card>
+            @empty
+              <div class="col-span-2 text-sm text-base-content/60">No permissions defined. Seed or create permissions first.</div>
+            @endforelse
+          </div>
         </div>
-      </div>
+      @endcan
     </div>
 
     <x-slot:actions>
