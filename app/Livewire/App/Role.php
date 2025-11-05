@@ -15,16 +15,19 @@ use Spatie\Permission\Models\Role as SpatieRole;
 #[Layout('layouts.app')]
 class Role extends Component
 {
-    use WithPagination;
     use Toast;
+    use WithPagination;
 
     // UI state
     public string $search = '';
+
     public int $perPage = 10;
 
     // Role form state
     public ?int $selectedRoleId = null;
+
     public string $name = '';
+
     public string $guard_name = 'web';
 
     // Permissions assigned to current role
@@ -32,7 +35,9 @@ class Role extends Component
 
     // Modals / confirmations
     public bool $showForm = false;
+
     public bool $isEditing = false;
+
     public ?int $confirmingDeleteId = null;
 
     protected $queryString = [
@@ -48,7 +53,7 @@ class Role extends Component
                 'required', 'string', 'max:255',
                 Rule::unique('roles', 'name')
                     ->where(fn ($q) => $q->where('guard_name', $this->guard_name))
-                    ->ignore($this->selectedRoleId)
+                    ->ignore($this->selectedRoleId),
             ],
             'guard_name' => ['required', 'string', Rule::in(['web'])],
             'selectedPermissions' => ['array'],
@@ -103,7 +108,8 @@ class Role extends Component
 
             // Prevent renaming protected roles if desired
             if (in_array($role->name, ['super-admin'], true) && $role->name !== $this->name) {
-                $this->error('This role is protected and cannot be renamed.');
+                $this->error(__('This role is protected and cannot be renamed.'));
+
                 return;
             }
 
@@ -128,7 +134,7 @@ class Role extends Component
             $role->syncPermissions($permissions);
         }
 
-        $this->success('Role saved successfully.', position: 'toast-bottom');
+        $this->success(__('Role saved successfully.'), position: 'toast-bottom');
         $this->showForm = false;
         $this->reset(['name', 'selectedPermissions', 'selectedRoleId', 'isEditing']);
         $this->resetPage();
@@ -143,21 +149,22 @@ class Role extends Component
     {
         $this->authorize('roles.delete');
 
-        if (!$this->confirmingDeleteId) {
+        if (! $this->confirmingDeleteId) {
             return;
         }
 
         $role = SpatieRole::findOrFail($this->confirmingDeleteId);
 
         if (in_array($role->name, ['super-admin'], true)) {
-            $this->error('This role is protected and cannot be deleted.');
+            $this->error(__('This role is protected and cannot be deleted.'));
             $this->confirmingDeleteId = null;
+
             return;
         }
 
         $role->delete();
         $this->confirmingDeleteId = null;
-        $this->success('Role deleted.', position: 'toast-bottom');
+        $this->success(__('Role deleted.'), position: 'toast-bottom');
         $this->resetPage();
     }
 
@@ -165,7 +172,7 @@ class Role extends Component
     {
         $this->authorize('roles.assign-permissions');
 
-        if (!$this->selectedRoleId) {
+        if (! $this->selectedRoleId) {
             return;
         }
 
@@ -174,8 +181,9 @@ class Role extends Component
             ->where('guard_name', $this->guard_name)
             ->first();
 
-        if (!$permission) {
-            $this->error('Permission not found.');
+        if (! $permission) {
+            $this->error(__('Permission not found.'));
+
             return;
         }
 
@@ -184,7 +192,7 @@ class Role extends Component
             $this->selectedPermissions = array_values(array_diff($this->selectedPermissions, [$permissionName]));
         } else {
             $role->givePermissionTo($permission);
-            if (!in_array($permissionName, $this->selectedPermissions, true)) {
+            if (! in_array($permissionName, $this->selectedPermissions, true)) {
                 $this->selectedPermissions[] = $permissionName;
             }
         }
@@ -208,6 +216,7 @@ class Role extends Component
         }
 
         ksort($grouped);
+
         return $grouped;
     }
 

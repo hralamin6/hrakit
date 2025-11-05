@@ -1,5 +1,5 @@
 <div>
-    <x-header title="My Activities" subtitle="Your personal activity history" separator />
+    <x-header :title="__('My Activities')" :subtitle="__('Your personal activity history')" separator />
 
     {{-- Filter Tabs --}}
     <div class="mb-6">
@@ -8,25 +8,25 @@
                 wire:click="setFilter('all')"
                 class="tab {{ $filter === 'all' ? 'tab-active' : '' }}"
             >
-                All
+                {{ __('All') }}
             </a>
             <a
                 wire:click="setFilter('today')"
                 class="tab {{ $filter === 'today' ? 'tab-active' : '' }}"
             >
-                Today
+                {{ __('Today') }}
             </a>
             <a
                 wire:click="setFilter('week')"
                 class="tab {{ $filter === 'week' ? 'tab-active' : '' }}"
             >
-                This Week
+                {{ __('This Week') }}
             </a>
             <a
                 wire:click="setFilter('month')"
                 class="tab {{ $filter === 'month' ? 'tab-active' : '' }}"
             >
-                This Month
+                {{ __('This Month') }}
             </a>
         </div>
     </div>
@@ -66,7 +66,7 @@
                                 {{-- Subject Info --}}
                                 @if($activity->subject)
                                     <div class="mt-2 text-sm">
-                                        <span class="text-base-content/60">Related to:</span>
+                                        <span class="text-base-content/60">{{ __('Related to:') }}</span>
                                         <span class="font-medium">{{ class_basename($activity->subject_type) }}</span>
                                         @if(method_exists($activity->subject, 'getActivityLabel'))
                                             <span class="text-base-content/60">- {{ $activity->subject->getActivityLabel() }}</span>
@@ -78,7 +78,7 @@
                                 @if($activity->properties && $activity->event === 'updated')
                                     <details class="mt-2">
                                         <summary class="cursor-pointer text-sm text-primary hover:underline">
-                                            View changes
+                                            {{ __('View changes') }}
                                         </summary>
                                         <div class="mt-2 p-3 bg-base-200 rounded text-sm">
                                             @if(isset($activity->properties['old']))
@@ -117,8 +117,8 @@
             @empty
                 <div class="text-center py-12 text-base-content/60">
                     <x-icon name="o-inbox" class="w-16 h-16 mx-auto mb-3 opacity-50" />
-                    <p class="text-lg font-medium">No activities found</p>
-                    <p class="text-sm">Your activities will appear here</p>
+                    <p class="text-lg font-medium">{{ __('No activities found') }}</p>
+                    <p class="text-sm">{{ __('Your activities will appear here') }}</p>
                 </div>
             @endforelse
         </div>

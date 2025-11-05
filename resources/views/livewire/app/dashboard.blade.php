@@ -1,3 +1,3 @@
 <div>
-     Waste no more time arguing what a good man should be, be one. - Marcus Aurelius
+     {{ __('Waste no more time arguing what a good man should be, be one.') }} - {{ __('Marcus Aurelius') }}
 </div>

@@ -25,15 +25,19 @@ class Profile extends Component
 
     // General
     public string $name = '';
+
     public string $email = '';
 
     // Password
     public string $current_password = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
 
     // Image
     public $photo; // TemporaryUploadedFile|null
+
     public string $photo_url = '';
 
     public ?string $avatarUrl = null;
@@ -86,9 +90,9 @@ class Profile extends Component
 
         if ($emailChanged && method_exists($user, 'sendEmailVerificationNotification')) {
             $user->sendEmailVerificationNotification();
-            $this->info('Profile updated. Check your inbox to verify the new email.', position: 'toast-bottom');
+            $this->info(__('Profile updated. Check your inbox to verify the new email.'), position: 'toast-bottom');
         } else {
-            $this->success('Profile updated.', position: 'toast-bottom');
+            $this->success(__('Profile updated.'), position: 'toast-bottom');
         }
 
         $this->refreshAvatarUrl();
@@ -111,7 +115,7 @@ class Profile extends Component
         // Clear password fields
         $this->reset(['current_password', 'password', 'password_confirmation']);
 
-        $this->success('Password changed successfully.', position: 'toast-bottom');
+        $this->success(__('Password changed successfully.'), position: 'toast-bottom');
     }
 
     public function savePhoto(): void
@@ -133,7 +137,7 @@ class Profile extends Component
         $this->reset('photo');
         $this->refreshAvatarUrl();
 
-        $this->success('Profile image updated.', position: 'toast-bottom');
+        $this->success(__('Profile image updated.'), position: 'toast-bottom');
     }
 
     public function savePhotoFromUrl(): void
@@ -149,25 +153,29 @@ class Profile extends Component
         try {
             $response = Http::timeout(12)->get($url);
         } catch (\Throwable $e) {
-            $this->error('Could not fetch image URL.', position: 'toast-bottom');
+            $this->error(__('Could not fetch image URL.'), position: 'toast-bottom');
+
             return;
         }
 
         if (! $response->ok()) {
-            $this->error('Invalid response from image URL.', position: 'toast-bottom');
+            $this->error(__('Invalid response from image URL.'), position: 'toast-bottom');
+
             return;
         }
 
         $contentType = $response->header('Content-Type', '');
         if (! str_starts_with(strtolower($contentType), 'image/')) {
-            $this->error('URL must point to an image.', position: 'toast-bottom');
+            $this->error(__('URL must point to an image.'), position: 'toast-bottom');
+
             return;
         }
 
         $body = $response->body();
         $max = 10 * 1024 * 1024; // 10MB
         if (strlen($body) > $max) {
-            $this->error('Image is larger than 10MB.', position: 'toast-bottom');
+            $this->error(__('Image is larger than 10MB.'), position: 'toast-bottom');
+
             return;
         }
 
@@ -186,7 +194,7 @@ class Profile extends Component
         if (! is_dir($tmpDir)) {
             @mkdir($tmpDir, 0775, true);
         }
-        $tmpFile = $tmpDir . '/' . uniqid('urlimg_', true) . '.' . $ext;
+        $tmpFile = $tmpDir.'/'.uniqid('urlimg_', true).'.'.$ext;
 
         file_put_contents($tmpFile, $body);
 
@@ -199,7 +207,7 @@ class Profile extends Component
         $this->reset('photo_url');
         $this->refreshAvatarUrl();
 
-        $this->success('Profile image updated from URL.', position: 'toast-bottom');
+        $this->success(__('Profile image updated.'), position: 'toast-bottom');
     }
 
     public function removePhoto(): void
@@ -210,7 +218,7 @@ class Profile extends Component
         $user->clearMediaCollection('profile');
         $this->reset(['photo', 'photo_url']);
         $this->refreshAvatarUrl();
-        $this->warning('Profile image removed.', position: 'toast-bottom');
+        $this->warning(__('Profile image removed.'), position: 'toast-bottom');
     }
 
     public function render()

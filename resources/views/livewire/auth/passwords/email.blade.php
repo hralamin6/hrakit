@@ -24,7 +24,7 @@
                         label="{{ __('Email address') }}"
                         type="email"
                         wire:model.lazy="email"
-                        placeholder="Enter your email"
+                        :placeholder="__('Enter your email')"
                         required
                         x-init="$nextTick(() => $el.focus())"
                     />

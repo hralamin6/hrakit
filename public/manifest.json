@@ -1,14 +1,14 @@
 {
-    "name": "Laravel update",
-    "short_name": "LA",
+    "name": "larakit",
+    "short_name": "larakit",
     "background_color": "#6777ef",
     "display": "fullscreen",
-    "description": "A Progressive Web Application setup for Laravel projects.",
+    "description": "",
     "theme_color": "#6777ef",
     "start_url": "/",
     "icons": [
         {
-            "src": "",
+            "src": "/storage/brand/JfE9zhaWFbNeYtDuDqdXA2ip8bk1r5M05JTKU7PL.jpg",
             "sizes": "512x512",
             "type": "image/png"
         }

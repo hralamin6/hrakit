@@ -34,7 +34,13 @@ class PermissionSeeder extends Seeder
             ],
             'backup' => [
                 'backups.view', 'backups.create', 'backups.download', 'backups.delete', 'backups.manage-schedules', 'backups.cleanup',
-              ],
+            ],
+            'translate' => [
+                'translations.view', 'translations.create', 'translations.update', 'translations.delete', 'translations.scan', 'translations.import', 'translations.export', 'translations.ai-translate',
+            ],
+            'pages' => [
+                'pages.view', 'pages.create', 'pages.edit', 'pages.delete',
+            ],
         ];
 
         // Create permissions
@@ -64,6 +70,7 @@ class PermissionSeeder extends Seeder
             'media.view', 'media.upload',
             'profile.update',
             'activity.dashboard', 'activity.feed', 'activity.delete',
+            'pages.view', 'pages.create', 'pages.edit',
         ])->get();
         $admin->syncPermissions($adminPerms);
 

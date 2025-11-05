@@ -1,5 +1,5 @@
 <div>
-    <x-header title="Notifications" subtitle="Manage your notifications and preferences" separator />
+    <x-header :title="__('Notifications')" :subtitle="__('Manage your notifications and preferences')" separator />
 
     {{-- Tab Navigation --}}
     <div class="mb-6">
@@ -10,7 +10,7 @@
                 wire:click="$set('activeTab', 'center')"
             >
                 <x-icon name="o-inbox" class="w-4 h-4 mr-2" />
-                Notification Center
+                {{ __('Notification Center') }}
                 @if($unreadCount > 0)
                     <x-badge value="{{ $unreadCount }}" class="badge-error badge-sm ml-2" />
                 @endif
@@ -21,7 +21,7 @@
                 wire:click="$set('activeTab', 'preferences')"
             >
                 <x-icon name="o-cog-6-tooth" class="w-4 h-4 mr-2" />
-                Preferences
+                {{ __('Preferences') }}
             </a>
         </div>
     </div>
@@ -34,21 +34,21 @@
                 <div class="flex items-center justify-between">
                     <div role="tablist" class="tabs tabs-boxed">
                         <a role="tab" class="tab {{ $selectedFilter === 'all' ? 'tab-active' : '' }}" wire:click="$set('selectedFilter', 'all')">
-                            All
+                            {{ __('All') }}
                         </a>
                         <a role="tab" class="tab {{ $selectedFilter === 'unread' ? 'tab-active' : '' }}" wire:click="$set('selectedFilter', 'unread')">
-                            Unread
+                            {{ __('Unread') }}
                             @if($unreadCount > 0)
                                 <x-badge value="{{ $unreadCount }}" class="badge-primary ml-2" />
                             @endif
                         </a>
                         <a role="tab" class="tab {{ $selectedFilter === 'read' ? 'tab-active' : '' }}" wire:click="$set('selectedFilter', 'read')">
-                            Read
+                            {{ __('Read') }}
                         </a>
                     </div>
                     <div class="flex gap-2">
-                        <x-button label="Mark All Read" icon="o-check-circle" class="btn-primary btn-sm" wire:click="markAllAsRead" spinner />
-                        <x-button label="Delete All" icon="o-trash" class="btn-error btn-sm" wire:click="deleteAll" wire:confirm="Delete all notifications?" spinner />
+                        <x-button :label="__('Mark All Read')" icon="o-check-circle" class="btn-primary btn-sm" wire:click="markAllAsRead" spinner />
+                        <x-button :label="__('Delete All')" icon="o-trash" class="btn-error btn-sm" wire:click="deleteAll" wire:confirm="{{ __('Delete all notifications?') }}" spinner />
                     </div>
                 </div>
             </x-card>
@@ -77,20 +77,20 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-start justify-between gap-2">
                                     <div class="flex-1">
-                                        <h3 class="font-semibold">{{ $data['title'] ?? 'Notification' }}</h3>
+                                        <h3 class="font-semibold">{{ $data['title'] ?? __('Notification') }}</h3>
                                         <p class="text-sm text-base-content/70 mt-1">{{ $data['message'] ?? '' }}</p>
                                         <div class="flex items-center gap-4 mt-2">
                                             <span class="text-xs text-base-content/50">{{ $notification->created_at->diffForHumans() }}</span>
                                             @if(is_null($notification->read_at))
-                                                <x-badge value="New" class="badge-primary badge-sm" />
+                                                <x-badge :value="__('New')" class="badge-primary badge-sm" />
                                             @endif
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         @if(is_null($notification->read_at))
-                                            <x-button icon="o-check" class="btn-ghost btn-sm btn-circle" wire:click="markAsRead('{{ $notification->id }}')" tooltip="Mark as read" spinner />
+                                            <x-button icon="o-check" class="btn-ghost btn-sm btn-circle" wire:click="markAsRead('{{ $notification->id }}')" :tooltip="__('Mark as read')" spinner />
                                         @endif
-                                        <x-button icon="o-trash" class="btn-ghost btn-sm btn-circle text-error" wire:click="deleteNotification('{{ $notification->id }}')" wire:confirm="Delete this notification?" tooltip="Delete" spinner />
+                                        <x-button icon="o-trash" class="btn-ghost btn-sm btn-circle text-error" wire:click="deleteNotification('{{ $notification->id }}')" wire:confirm="{{ __('Delete this notification?') }}" :tooltip="__('Delete')" spinner />
                                     </div>
                                 </div>
                             </div>
@@ -100,8 +100,8 @@
                     <x-card>
                         <div class="text-center py-12">
                             <x-icon name="o-bell-slash" class="w-16 h-16 mx-auto text-base-content/30" />
-                            <h3 class="mt-4 text-lg font-semibold text-base-content/70">No notifications</h3>
-                            <p class="mt-2 text-sm text-base-content/50">You're all caught up!</p>
+                            <h3 class="mt-4 text-lg font-semibold text-base-content/70">{{ __('No notifications') }}</h3>
+                            <p class="mt-2 text-sm text-base-content/50">{{ __("You're all caught up!") }}</p>
                         </div>
                     </x-card>
                 @endforelse
@@ -121,14 +121,14 @@
                     <div class="alert alert-info">
                         <x-icon name="o-information-circle" class="w-5 h-5" />
                         <div class="text-sm">
-                            <strong>Push:</strong> Browser notifications •
-                            <strong>Email:</strong> Email messages •
-                            <strong>Database:</strong> In-app notifications
+                            <strong>{{ __('Push:') }}</strong> {{ __('Browser notifications') }} •
+                            <strong>{{ __('Email:') }}</strong> {{ __('Email messages') }} •
+                            <strong>{{ __('Database:') }}</strong> {{ __('In-app notifications') }}
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <x-button label="Enable All" icon="o-check-circle" class="btn-success btn-sm" wire:click="enableAll" spinner />
-                        <x-button label="Disable All" icon="o-x-circle" class="btn-error btn-sm" wire:click="disableAll" spinner />
+                        <x-button :label="__('Enable All')" icon="o-check-circle" class="btn-success btn-sm" wire:click="enableAll" spinner />
+                        <x-button :label="__('Disable All')" icon="o-x-circle" class="btn-error btn-sm" wire:click="disableAll" spinner />
                     </div>
                 </div>
 
@@ -136,53 +136,44 @@
                     <table class="table table-zebra">
                         <thead>
                             <tr>
-                                <th>Category</th>
+                                <th>{{ __('Category') }}</th>
                                 <th class="text-center">
                                     <div class="flex flex-col items-center">
                                         <x-icon name="o-bell" class="w-5 h-5" />
-                                        <span class="text-xs">Push</span>
+                                        <span class="text-xs">{{ __('Push') }}</span>
                                     </div>
                                 </th>
                                 <th class="text-center">
                                     <div class="flex flex-col items-center">
                                         <x-icon name="o-envelope" class="w-5 h-5" />
-                                        <span class="text-xs">Email</span>
+                                        <span class="text-xs">{{ __('Email') }}</span>
                                     </div>
                                 </th>
                                 <th class="text-center">
                                     <div class="flex flex-col items-center">
                                         <x-icon name="o-inbox" class="w-5 h-5" />
-                                        <span class="text-xs">Database</span>
+                                        <span class="text-xs">{{ __('Database') }}</span>
                                     </div>
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($categories as $category => $details)
+                            @foreach($preferences as $category => $channels)
                                 <tr>
-                                    <td>
-                                        <div>
-                                            <div class="font-semibold">{{ $details['name'] }}</div>
-                                            <div class="text-sm text-base-content/60">{{ $details['description'] }}</div>
-                                        </div>
+                                    <td class="font-medium">{{ ucfirst(str_replace('_', ' ', $category)) }}</td>
+                                    <td class="text-center">
+                                        <x-checkbox wire:model.live="preferences.{{ $category }}.push" />
                                     </td>
                                     <td class="text-center">
-                                        <x-checkbox wire:model="preferences.{{ $category }}.push_enabled" class="checkbox-primary" />
+                                        <x-checkbox wire:model.live="preferences.{{ $category }}.mail" />
                                     </td>
                                     <td class="text-center">
-                                        <x-checkbox wire:model="preferences.{{ $category }}.email_enabled" class="checkbox-secondary" />
-                                    </td>
-                                    <td class="text-center">
-                                        <x-checkbox wire:model="preferences.{{ $category }}.database_enabled" class="checkbox-accent" />
+                                        <x-checkbox wire:model.live="preferences.{{ $category }}.database" />
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
-                </div>
-
-                <div class="flex justify-end mt-6">
-                    <x-button label="Save Preferences" icon="o-check" class="btn-primary" wire:click="savePreferences" spinner />
                 </div>
             </x-card>
         </div>

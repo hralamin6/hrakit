@@ -16,27 +16,38 @@ use Spatie\Permission\Models\Role;
 #[Layout('layouts.app')]
 class User extends Component
 {
-    use WithPagination;
     use Toast;
+    use WithPagination;
 
     // Table state
     public string $search = '';
+
     public int $perPage = 10;
+
     public string $sortField = 'name';
+
     public string $sortDirection = 'asc';
+
     public ?string $roleFilter = null; // role name
 
     // Form state
     public ?int $selectedUserId = null;
+
     public string $name = '';
+
     public string $email = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
+
     public array $selectedRoles = []; // role IDs for x-choices component
 
     // UI
     public bool $showForm = false;
+
     public bool $isEditing = false;
+
     public ?int $confirmingDeleteId = null;
 
     protected $queryString = [
@@ -57,7 +68,7 @@ class User extends Component
             'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required', 'email', 'max:255',
-                Rule::unique('users', 'email')->ignore($this->selectedUserId)
+                Rule::unique('users', 'email')->ignore($this->selectedUserId),
             ],
             'password' => $passwordRules,
             'selectedRoles' => ['array'],
@@ -65,9 +76,20 @@ class User extends Component
         ];
     }
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingPerPage(): void { $this->resetPage(); }
-    public function updatingRoleFilter(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingRoleFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function mount(): void
     {
@@ -123,7 +145,7 @@ class User extends Component
             $user = UserModel::findOrFail($this->selectedUserId);
             $user->name = $this->name;
             $user->email = $this->email;
-            if (!empty($this->password)) {
+            if (! empty($this->password)) {
                 $user->password = Hash::make($this->password);
             }
             $user->save();
@@ -142,29 +164,35 @@ class User extends Component
             $user->syncRoles($roles);
         }
 
-        $this->success('User saved successfully.', position: 'toast-bottom');
+        $this->success(__('User saved successfully.'), position: 'toast-bottom');
         $this->showForm = false;
         $this->reset(['selectedUserId', 'name', 'email', 'password', 'password_confirmation', 'selectedRoles', 'isEditing']);
         $this->resetPage();
     }
 
-    public function confirmDelete(int $id): void { $this->confirmingDeleteId = $id; }
+    public function confirmDelete(int $id): void
+    {
+        $this->confirmingDeleteId = $id;
+    }
 
     public function deleteConfirmed(): void
     {
         $this->authorize('users.delete');
 
-        if (!$this->confirmingDeleteId) return;
+        if (! $this->confirmingDeleteId) {
+            return;
+        }
         $user = UserModel::findOrFail($this->confirmingDeleteId);
         // Guard against deleting yourself
         if (auth()->id() === $user->id) {
-            $this->error("You can't delete your own account.");
+            $this->error(__("You can't delete your own account."));
             $this->confirmingDeleteId = null;
+
             return;
         }
         $user->delete();
         $this->confirmingDeleteId = null;
-        $this->success('User deleted.', position: 'toast-bottom');
+        $this->success(__('User deleted.'), position: 'toast-bottom');
         $this->resetPage();
     }
 
@@ -200,7 +228,7 @@ class User extends Component
             $s = "%{$this->search}%";
             $query->where(function ($q) use ($s) {
                 $q->where('name', 'like', $s)
-                  ->orWhere('email', 'like', $s);
+                    ->orWhere('email', 'like', $s);
             });
         }
 

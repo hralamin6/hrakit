@@ -2,12 +2,12 @@
     {{-- Header with Stats --}}
     <div class="bg-white dark:bg-base-200 rounded-lg shadow p-6">
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Backup Management</h1>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ __('Backup Management') }}</h1>
             <x-button
                 wire:click="$set('showCreateModal', true)"
                 icon="o-plus"
                 class="btn-primary">
-                Create Backup
+                {{ __('Create Backup') }}
             </x-button>
         </div>
 
@@ -19,7 +19,7 @@
                         <x-icon name="o-archive-box" class="w-6 h-6 text-blue-600 dark:text-blue-300" />
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-blue-600 dark:text-blue-300">Total Backups</p>
+                        <p class="text-sm font-medium text-blue-600 dark:text-blue-300">{{ __('Total Backups') }}</p>
                         <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">{{ $stats['total'] }}</p>
                     </div>
                 </div>
@@ -31,7 +31,7 @@
                         <x-icon name="o-check-circle" class="w-6 h-6 text-green-600 dark:text-green-300" />
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-green-600 dark:text-green-300">Completed</p>
+                        <p class="text-sm font-medium text-green-600 dark:text-green-300">{{ __('Completed') }}</p>
                         <p class="text-2xl font-bold text-green-900 dark:text-green-100">{{ $stats['completed'] }}</p>
                     </div>
                 </div>
@@ -43,7 +43,7 @@
                         <x-icon name="o-x-circle" class="w-6 h-6 text-red-600 dark:text-red-300" />
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-red-600 dark:text-red-300">Failed</p>
+                        <p class="text-sm font-medium text-red-600 dark:text-red-300">{{ __('Failed') }}</p>
                         <p class="text-2xl font-bold text-red-900 dark:text-red-100">{{ $stats['failed'] }}</p>
                     </div>
                 </div>
@@ -55,7 +55,7 @@
                         <x-icon name="o-clock" class="w-6 h-6 text-yellow-600 dark:text-yellow-300" />
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-yellow-600 dark:text-yellow-300">Running</p>
+                        <p class="text-sm font-medium text-yellow-600 dark:text-yellow-300">{{ __('Running') }}</p>
                         <p class="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{{ $stats['running'] }}</p>
                     </div>
                 </div>
@@ -67,7 +67,7 @@
                         <x-icon name="o-calendar-days" class="w-6 h-6 text-purple-600 dark:text-purple-300" />
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-purple-600 dark:text-purple-300">Recent (7d)</p>
+                        <p class="text-sm font-medium text-purple-600 dark:text-purple-300">{{ __('Recent (7d)') }}</p>
                         <p class="text-2xl font-bold text-purple-900 dark:text-purple-100">{{ $stats['recent'] }}</p>
                     </div>
                 </div>
@@ -80,7 +80,7 @@
                         <x-icon name="o-server" class="w-6 h-6 text-gray-600 dark:text-gray-300" />
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Total Storage Used</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ __('Total Storage Used') }}</p>
                         <p class="text-xl font-bold text-gray-900 dark:text-white">
                             @if($stats['total_size'] > 0)
                                 @php
@@ -112,7 +112,7 @@
                 {{-- Search --}}
                 <x-input
                     wire:model.live="search"
-                    placeholder="Search backups..."
+                    placeholder="{{ __('Search backups...') }}"
                     icon="o-magnifying-glass"
                     class="w-full sm:w-64" />
 
@@ -120,11 +120,11 @@
                 <x-select
                     wire:model.live="statusFilter"
                     :options="[
-                        ['id' => 'all', 'name' => 'All Status'],
-                        ['id' => 'completed', 'name' => 'Completed'],
-                        ['id' => 'running', 'name' => 'Running'],
-                        ['id' => 'failed', 'name' => 'Failed'],
-                        ['id' => 'pending', 'name' => 'Pending']
+                        ['id' => 'all', 'name' => __('All Status')],
+                        ['id' => 'completed', 'name' => __('Completed')],
+                        ['id' => 'running', 'name' => __('Running')],
+                        ['id' => 'failed', 'name' => __('Failed')],
+                        ['id' => 'pending', 'name' => __('Pending')]
                     ]"
                     option-value="id"
                     option-label="name" />
@@ -133,9 +133,9 @@
                 <x-select
                     wire:model.live="typeFilter"
                     :options="[
-                        ['id' => 'all', 'name' => 'All Types'],
-                        ['id' => 'manual', 'name' => 'Manual'],
-                        ['id' => 'scheduled', 'name' => 'Scheduled']
+                        ['id' => 'all', 'name' => __('All Types')],
+                        ['id' => 'manual', 'name' => __('Manual')],
+                        ['id' => 'scheduled', 'name' => __('Scheduled')]
                     ]"
                     option-value="id"
                     option-label="name" />
@@ -145,10 +145,10 @@
                 @if(count($selectedBackups) > 0)
                     <x-button
                         wire:click="deleteSelected"
-                        wire:confirm="Are you sure you want to delete the selected backups?"
+                        wire:confirm="{{ __('Are you sure you want to delete the selected backups?') }}"
                         icon="o-trash"
                         class="btn-error">
-                        Delete Selected ({{ count($selectedBackups) }})
+                        {{ __('Delete Selected') }} ({{ count($selectedBackups) }})
                     </x-button>
                 @endif
 
@@ -156,14 +156,14 @@
                     wire:click="showCleanupModal"
                     icon="o-trash"
                     class="btn-warning">
-                    Cleanup
+                    {{ __('Cleanup') }}
                 </x-button>
 
                 <x-button
                     wire:click="enableScheduledBackups"
                     icon="o-calendar"
                     class="btn-info">
-                    Schedule Backup
+                    {{ __('Schedule Backup') }}
                 </x-button>
             </div>
         </div>
@@ -179,19 +179,19 @@
                             <x-checkbox wire:model.live="selectAll" />
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Backup Details
+                            {{ __('Backup Details') }}
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Status
+                            {{ __('Status') }}
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            📦 File Size & Duration
+                            📦 {{ __('File Size & Duration') }}
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Created
+                            {{ __('Created') }}
                         </th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            📥 Download & Actions
+                            📥 {{ __('Download & Actions') }}
                         </th>
                     </tr>
                 </thead>
@@ -223,22 +223,22 @@
                                 @if($backup->status === 'completed')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
                                         <x-icon name="o-check-circle" class="w-4 h-4 mr-1" />
-                                        Completed
+                                        {{ __('Completed') }}
                                     </span>
                                 @elseif($backup->status === 'running')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
                                         <x-icon name="o-clock" class="w-4 h-4 mr-1 animate-spin" />
-                                        Running
+                                        {{ __('Running') }}
                                     </span>
                                 @elseif($backup->status === 'failed')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                                         <x-icon name="o-x-circle" class="w-4 h-4 mr-1" />
-                                        Failed
+                                        {{ __('Failed') }}
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                                         <x-icon name="o-ellipsis-horizontal-circle" class="w-4 h-4 mr-1" />
-                                        Pending
+                                        {{ __('Pending') }}
                                     </span>
                                 @endif
                             </td>
@@ -257,7 +257,7 @@
                                         </div>
                                     @else
                                         <div class="text-gray-400 dark:text-gray-500 italic">
-                                            {{ $backup->status === 'running' ? 'Calculating...' : 'Unknown' }}
+                                            {{ $backup->status === 'running' ? __('Calculating...') : __('Unknown') }}
                                         </div>
                                     @endif
 
@@ -274,7 +274,7 @@
                                 <div>{{ $backup->created_at->format('M j, Y') }}</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">{{ $backup->created_at->format('g:i A') }}</div>
                                 @if($backup->creator)
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">by {{ $backup->creator->name }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ __('by') }} {{ $backup->creator->name }}</div>
                                 @endif
                             </td>
                             {{-- Enhanced Actions with Prominent Download --}}
@@ -288,8 +288,8 @@
                                                     wire:click="downloadBackup({{ $backup->id }})"
                                                     icon="o-arrow-down-tray"
                                                     class="btn-sm btn-success text-white font-medium"
-                                                    tooltip="Download {{ $backup->formatted_file_size }} backup file">
-                                                    📥 Download
+                                                    tooltip="{{ __('Download') }} {{ $backup->formatted_file_size }} {{ __('backup file') }}">
+                                                    📥 {{ __('Download') }}
                                                 </x-button>
                                                 <span class="text-xs text-green-600 dark:text-green-400 font-bold">
                                                     {{ $backup->formatted_file_size }}
@@ -300,9 +300,9 @@
                                             <x-button
                                                 icon="o-exclamation-triangle"
                                                 class="btn-sm btn-warning"
-                                                tooltip="Backup file not found on disk"
+                                                tooltip="{{ __('Backup file not found on disk') }}"
                                                 disabled>
-                                                📄 Missing
+                                                📄 {{ __('Missing') }}
                                             </x-button>
                                         @endif
                                     @elseif($backup->status === 'running')
@@ -310,18 +310,18 @@
                                         <x-button
                                             icon="o-arrow-path"
                                             class="btn-sm btn-info loading"
-                                            tooltip="Backup in progress..."
+                                            tooltip="{{ __('Backup in progress...') }}"
                                             disabled>
-                                            ⏳ Processing
+                                            ⏳ {{ __('Processing') }}
                                         </x-button>
                                     @elseif($backup->status === 'pending')
                                         {{-- Pending Indicator --}}
                                         <x-button
                                             icon="o-clock"
                                             class="btn-sm btn-ghost"
-                                            tooltip="Backup queued for processing"
+                                            tooltip="{{ __('Backup queued for processing') }}"
                                             disabled>
-                                            ⏰ Queued
+                                            ⏰ {{ __('Queued') }}
                                         </x-button>
                                     @endif
 
@@ -336,10 +336,10 @@
                                     {{-- Delete Button --}}
                                     <x-button
                                         wire:click="deleteBackup({{ $backup->id }})"
-                                        wire:confirm="Are you sure you want to delete this backup? This action cannot be undone."
+                                        wire:confirm="{{ __('Are you sure you want to delete this backup? This action cannot be undone.') }}"
                                         icon="o-trash"
                                         class="btn-sm btn-ghost text-error hover:btn-error hover:text-white"
-                                        tooltip="Delete Backup" />
+                                        tooltip="{{ __('Delete Backup') }}" />
                                 </div>
                             </td>
                         </tr>
@@ -347,14 +347,14 @@
                         <tr>
                             <td colspan="6" class="px-6 py-12 text-center">
                                 <x-icon name="o-archive-box" class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
-                                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No backups found</h3>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating your first backup.</p>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">{{ __('No backups found') }}</h3>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ __('Get started by creating your first backup.') }}</p>
                                 <div class="mt-6">
                                     <x-button
                                         wire:click="$set('showCreateModal', true)"
                                         icon="o-plus"
                                         class="btn-primary">
-                                        🚀 Create Your First Backup
+                                        🚀 {{ __('Create Your First Backup') }}
                                     </x-button>
                                 </div>
                             </td>
@@ -373,15 +373,15 @@
     </div>
 
     {{-- Create Backup Modal --}}
-    <x-modal wire:model="showCreateModal" title="Create New Backup" persistent class="backdrop-blur">
+    <x-modal wire:model="showCreateModal" title="{{ __('Create New Backup') }}" persistent class="backdrop-blur">
         <div class="space-y-4">
             <div>
                 <x-radio
                     wire:model="backupType"
                     :options="[
-                        ['id' => 'both', 'name' => '📦 Database + Files', 'description' => 'Complete backup including database and application files'],
-                        ['id' => 'database', 'name' => '🗃️ Database Only', 'description' => 'Backup only the database content'],
-                        ['id' => 'files', 'name' => '📁 Files Only', 'description' => 'Backup only application files']
+                        ['id' => 'both', 'name' => __('📦 Database + Files'), 'description' => __('Complete backup including database and application files')],
+                        ['id' => 'database', 'name' => __('🗃️ Database Only'), 'description' => __('Backup only the database content')],
+                        ['id' => 'files', 'name' => __('📁 Files Only'), 'description' => __('Backup only application files')]
                     ]"
                     option-value="id"
                     option-label="name"
@@ -390,9 +390,9 @@
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" wire:click="$set('showCreateModal', false)" />
+            <x-button label="{{ __('Cancel') }}" wire:click="$set('showCreateModal', false)" />
             <x-button
-                label="🚀 Create Backup"
+                label="🚀 {{ __('Create Backup') }}"
                 wire:click="createBackup"
                 class="btn-primary"
                 spinner="createBackup" />
@@ -400,30 +400,30 @@
     </x-modal>
 
     {{-- Cleanup Modal --}}
-    <x-modal wire:model="showCleanupModal" title="🗑️ Cleanup Old Backups" persistent class="backdrop-blur">
+    <x-modal wire:model="showCleanupModal" title="🗑️ {{ __('Cleanup Old Backups') }}" persistent class="backdrop-blur">
         <div class="space-y-4">
             <x-input
                 wire:model="cleanupDays"
-                label="Delete backups older than (days)"
+                label="{{ __('Delete backups older than (days)') }}"
                 type="number"
                 min="1" />
 
             <x-select
                 wire:model="cleanupType"
-                label="Backup type to cleanup"
+                label="{{ __('Backup type to cleanup') }}"
                 :options="[
-                    ['id' => 'all', 'name' => 'All backup types'],
-                    ['id' => 'manual', 'name' => 'Manual backups only'],
-                    ['id' => 'scheduled', 'name' => 'Scheduled backups only']
+                    ['id' => 'all', 'name' => __('All backup types')],
+                    ['id' => 'manual', 'name' => __('Manual backups only')],
+                    ['id' => 'scheduled', 'name' => __('Scheduled backups only')]
                 ]"
                 option-value="id"
                 option-label="name" />
         </div>
 
         <x-slot:actions>
-            <x-button label="Cancel" wire:click="$set('showCleanupModal', false)" />
+            <x-button label="{{ __('Cancel') }}" wire:click="$set('showCleanupModal', false)" />
             <x-button
-                label="🗑️ Cleanup Backups"
+                label="🗑️ {{ __('Cleanup Backups') }}"
                 wire:click="cleanupOldBackups"
                 class="btn-warning"
                 spinner="cleanupOldBackups" />

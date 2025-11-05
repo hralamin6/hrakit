@@ -23,10 +23,10 @@
 
         <x-card class="p-6">
             <form wire:submit="authenticate" class="space-y-5">
-                <x-input :label="__('Email Address')" wire:model.lazy="email" type="email" required icon="o-envelope" placeholder="Enter your email" x-init="$nextTick(() => $el.focus())"
+                <x-input :label="__('Email Address')" wire:model.lazy="email" type="email" required icon="o-envelope" :placeholder="__('Enter your email')" x-init="$nextTick(() => $el.focus())"
                 />
 
-                <x-input :label="__('Password')" wire:model.lazy="password" type="password" required icon="o-lock-closed" placeholder="Enter your password"
+                <x-input :label="__('Password')" wire:model.lazy="password" type="password" required icon="o-lock-closed" :placeholder="__('Enter your password')"
                 />
 
                 <div class="flex items-center justify-between">

@@ -20,18 +20,20 @@
         "owenvoke/blade-fontawesome": "^2.9",
         "robsontenorio/mary": "^2.4",
         "spatie/laravel-backup": "^9.3",
-        "spatie/laravel-medialibrary": "^11.17",
+        "spatie/laravel-medialibrary": "^11.9",
         "spatie/laravel-permission": "^6.22"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "laravel/boost": "^1.6",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
         "pestphp/pest": "^4.1",
-        "pestphp/pest-plugin-laravel": "^4.0"
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "tanmuhittin/laravel-google-translate": "^2.4"
     },
     "autoload": {
         "psr-4": {
