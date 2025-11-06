@@ -4,6 +4,21 @@
     x-init="init()"
     @message-sent.window="handleMessageSent()"
 >
+    {{-- Flash Messages --}}
+    @if (session()->has('message'))
+        <div class="alert alert-success shadow-lg mb-4" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)">
+            <x-icon name="o-check-circle" class="w-5 h-5" />
+            <span>{{ session('message') }}</span>
+        </div>
+    @endif
+
+    @if (session()->has('error'))
+        <div class="alert alert-error shadow-lg mb-4" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
+            <x-icon name="o-exclamation-triangle" class="w-5 h-5" />
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
+
     <div class="flex h-full bg-base-100 rounded-xl shadow-xl overflow-hidden">
         <!-- Conversations List Sidebar -->
         <div class="w-full md:w-96 border-r border-base-300 flex flex-col">
@@ -166,9 +181,56 @@
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn btn-ghost btn-sm btn-circle">
-                                <x-icon name="o-ellipsis-vertical" class="w-5 h-5" />
-                            </button>
+                            <div class="dropdown dropdown-end">
+                                <label tabindex="0" class="btn btn-ghost btn-sm btn-circle">
+                                    <x-icon name="o-ellipsis-vertical" class="w-5 h-5" />
+                                </label>
+                                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-56 border border-base-300">
+                                    <li>
+                                        <button class="text-sm">
+                                            <x-icon name="o-bell" class="w-4 h-4" />
+                                            Mute notifications
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="text-sm">
+                                            <x-icon name="o-archive-box" class="w-4 h-4" />
+                                            Archive conversation
+                                        </button>
+                                    </li>
+                                    <div class="divider my-0"></div>
+                                    @if($this->isUserBlocked())
+                                        <li>
+                                            <button wire:click="unblockUser" class="text-sm text-success">
+                                                <x-icon name="o-check-circle" class="w-4 h-4" />
+                                                Unblock {{ $otherUser->name }}
+                                            </button>
+                                        </li>
+                                    @else
+                                        <li>
+                                            <button 
+                                                wire:click="blockUser"
+                                                wire:confirm="Are you sure you want to block {{ $otherUser->name }}?"
+                                                class="text-sm text-warning"
+                                            >
+                                                <x-icon name="o-no-symbol" class="w-4 h-4" />
+                                                Block {{ $otherUser->name }}
+                                            </button>
+                                        </li>
+                                    @endif
+                                    <div class="divider my-0"></div>
+                                    <li>
+                                        <button 
+                                            wire:click="deleteConversation"
+                                            wire:confirm="Are you sure you want to delete this conversation? This action cannot be undone."
+                                            class="text-sm text-error"
+                                        >
+                                            <x-icon name="o-trash" class="w-4 h-4" />
+                                            Delete conversation
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -405,6 +467,30 @@
 
                 <!-- Message Input -->
                 <div class="p-4 border-t border-base-300 bg-base-100">
+                    @php
+                        $isBlocked = $this->isUserBlocked();
+                        $otherUserBlocked = \DB::table('conversation_user')
+                            ->where('conversation_id', $selectedConversationId)
+                            ->where('user_id', $otherUser->id)
+                            ->value('is_blocked');
+                    @endphp
+
+                    {{-- Blocked Warning --}}
+                    @if($isBlocked || $otherUserBlocked)
+                        <div class="alert alert-warning shadow-lg mb-4">
+                            <x-icon name="o-no-symbol" class="w-5 h-5" />
+                            <div>
+                                @if($isBlocked)
+                                    <p class="font-semibold">You have blocked this conversation</p>
+                                    <p class="text-sm">Unblock to send messages</p>
+                                @else
+                                    <p class="font-semibold">You cannot send messages</p>
+                                    <p class="text-sm">This user has blocked you</p>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Editing indicator --}}
                     @if($editingMessageId)
                         <div class="mb-2 p-2 bg-warning/10 border-l-4 border-warning rounded-lg flex items-center justify-between">
@@ -473,8 +559,9 @@
                                 id="file-input"
                                 class="hidden"
                                 multiple
+                                @if($isBlocked || $otherUserBlocked) disabled @endif
                             />
-                            <label for="file-input" class="btn btn-ghost btn-circle">
+                            <label for="file-input" class="btn btn-ghost btn-circle @if($isBlocked || $otherUserBlocked) btn-disabled @endif">
                                 <x-icon name="o-paper-clip" class="w-5 h-5" />
                             </label>
                         </div>
@@ -482,11 +569,12 @@
                         <div class="flex-1">
                             <textarea
                                 wire:model="body"
-                                placeholder="Type a message..."
+                                placeholder="@if($isBlocked || $otherUserBlocked) Cannot send messages @else Type a message... @endif"
                                 rows="1"
                                 class="textarea textarea-bordered w-full resize-none"
                                 @keydown.enter.prevent="if (!$event.shiftKey) { $wire.sendMessage(); }"
                                 @input.debounce.500ms="whisperTyping()"
+                                @if($isBlocked || $otherUserBlocked) disabled @endif
                             ></textarea>
                         </div>
 
@@ -494,6 +582,7 @@
                             type="submit"
                             class="btn btn-primary btn-circle shadow-lg"
                             wire:loading.attr="disabled"
+                            @if($isBlocked || $otherUserBlocked) disabled @endif
                         >
                             @if($editingMessageId)
                                 <x-icon name="o-check" class="w-5 h-5" />

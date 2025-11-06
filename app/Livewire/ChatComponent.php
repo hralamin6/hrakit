@@ -154,6 +154,23 @@ class ChatComponent extends Component
             return;
         }
 
+        // Check if either user has blocked the conversation
+        $isBlockedByMe = \DB::table('conversation_user')
+            ->where('conversation_id', $this->selectedConversationId)
+            ->where('user_id', auth()->id())
+            ->value('is_blocked');
+
+        $otherUser = $conversation->getOtherUser(auth()->id());
+        $isBlockedByOther = \DB::table('conversation_user')
+            ->where('conversation_id', $this->selectedConversationId)
+            ->where('user_id', $otherUser->id)
+            ->value('is_blocked');
+
+        if ($isBlockedByMe || $isBlockedByOther) {
+            session()->flash('error', 'Cannot send message. This conversation is blocked.');
+            return;
+        }
+
         // Create message
         $message = Message::create([
             'conversation_id' => $this->selectedConversationId,
@@ -262,6 +279,69 @@ class ChatComponent extends Component
         $this->attachments = array_values($this->attachments);
     }
 
+    public function deleteConversation()
+    {
+        if (!$this->selectedConversationId) {
+            return;
+        }
+
+        $conversation = Conversation::find($this->selectedConversationId);
+        
+        if ($conversation && $conversation->hasUser(auth()->id())) {
+            // Delete all messages in the conversation
+            Message::where('conversation_id', $this->selectedConversationId)->delete();
+            
+            // Delete the conversation
+            $conversation->delete();
+            
+            // Reset selection
+            $this->selectedConversationId = null;
+            $this->body = '';
+            $this->replyingTo = null;
+            $this->editingMessageId = null;
+            
+            session()->flash('message', 'Conversation deleted successfully.');
+        }
+    }
+
+    public function blockUser()
+    {
+        if (!$this->selectedConversationId) {
+            return;
+        }
+
+        $conversation = Conversation::find($this->selectedConversationId);
+        
+        if ($conversation && $conversation->hasUser(auth()->id())) {
+            // Update is_blocked field in conversation_user pivot table
+            \DB::table('conversation_user')
+                ->where('conversation_id', $this->selectedConversationId)
+                ->where('user_id', auth()->id())
+                ->update(['is_blocked' => true]);
+            
+            session()->flash('message', 'User blocked successfully.');
+        }
+    }
+
+    public function unblockUser()
+    {
+        if (!$this->selectedConversationId) {
+            return;
+        }
+
+        $conversation = Conversation::find($this->selectedConversationId);
+        
+        if ($conversation && $conversation->hasUser(auth()->id())) {
+            // Update is_blocked field in conversation_user pivot table
+            \DB::table('conversation_user')
+                ->where('conversation_id', $this->selectedConversationId)
+                ->where('user_id', auth()->id())
+                ->update(['is_blocked' => false]);
+            
+            session()->flash('message', 'User unblocked successfully.');
+        }
+    }
+
     public function refreshMessages()
     {
         // Mark unread messages as read when refreshing
@@ -271,6 +351,21 @@ class ChatComponent extends Component
     public function refreshConversations()
     {
         // Just trigger a re-render
+    }
+
+    public function isUserBlocked()
+    {
+        if (!$this->selectedConversationId) {
+            return false;
+        }
+
+        // Check if current user has blocked this conversation
+        $result = \DB::table('conversation_user')
+            ->where('conversation_id', $this->selectedConversationId)
+            ->where('user_id', auth()->id())
+            ->value('is_blocked');
+
+        return (bool) $result;
     }
 
     private function markUnreadMessagesAsRead()
