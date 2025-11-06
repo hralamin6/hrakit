@@ -1,16 +1,12 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\App;
 
-use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\Message;
-use App\Models\MessageAttachment;
 use App\Models\MessageReaction;
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -165,10 +161,10 @@ class ChatComponent extends Component
 
         // Get total count
         $totalMessages = $query->count();
-        
+
         // Calculate how many messages to load (all loaded so far)
         $loadCount = $this->messagesOffset + $this->messagesPerPage;
-        
+
         // Check if there are more messages
         $this->hasMoreMessages = $totalMessages > $loadCount;
 
@@ -532,6 +528,6 @@ class ChatComponent extends Component
     // ==========================================
     public function render()
     {
-        return view('livewire.chat-component')->layout('layouts.app');
+        return view('livewire.app.chat-component')->layout('layouts.app');
     }
 }
