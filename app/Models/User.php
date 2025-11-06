@@ -101,6 +101,34 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
     }
 
     /**
+     * Check if user is currently online (has active session in last 5 minutes)
+     */
+    public function isOnline(): bool
+    {
+        return \DB::table('sessions')
+            ->where('user_id', $this->id)
+            ->where('last_activity', '>', now()->subMinutes(5)->timestamp)
+            ->exists();
+    }
+
+    /**
+     * Get user's last seen time from sessions table
+     */
+    public function getLastSeenAttribute()
+    {
+        $session = \DB::table('sessions')
+            ->where('user_id', $this->id)
+            ->orderBy('last_activity', 'desc')
+            ->first();
+
+        if ($session) {
+            return \Carbon\Carbon::createFromTimestamp($session->last_activity);
+        }
+
+        return null;
+    }
+
+    /**
      * Get the user's notification preferences.
      */
     public function notificationPreferences()

@@ -8,10 +8,13 @@
         <!-- Conversations List Sidebar -->
         <div class="w-full md:w-96 border-r border-base-300 flex flex-col">
             <!-- Header -->
-            <div class="p-4 border-b border-base-300 bg-base-200">
+            <div class="p-4 border-b border-base-300 bg-gradient-to-r from-primary/10 to-secondary/10">
                 <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-xl font-bold text-base-content">Messages</h2>
-                    <button wire:click="$set('showNewChatModal', true)" class="btn btn-primary btn-sm btn-circle">
+                    <h2 class="text-xl font-bold text-base-content flex items-center gap-2">
+                        <x-icon name="o-chat-bubble-left-right" class="w-6 h-6 text-primary" />
+                        Messages
+                    </h2>
+                    <button wire:click="$set('showNewChatModal', true)" class="btn btn-primary btn-sm btn-circle shadow-lg">
                         <x-icon name="o-plus" class="w-5 h-5" />
                     </button>
                 </div>
@@ -32,22 +35,28 @@
                         $otherUser = $conversation->getOtherUser(auth()->id());
                         $unreadCount = $conversation->getUnreadCount(auth()->id());
                         $latestMessage = $conversation->latestMessage;
+                        $isActive = $selectedConversationId == $conversation->id;
                     @endphp
 
                     <div
                         wire:click="selectConversation({{ $conversation->id }})"
-                        class="p-4 border-b border-base-300 cursor-pointer hover:bg-base-200 transition-colors {{ $selectedConversationId == $conversation->id ? 'bg-primary/10' : '' }}"
+                        class="p-4 border-b border-base-300 cursor-pointer hover:bg-base-200/50 transition-all duration-200 {{ $isActive ? 'bg-primary/10 border-l-4 border-l-primary' : '' }}"
                     >
                         <div class="flex items-start gap-3">
-                            <div class="avatar">
-                                <div class="w-12 h-12 rounded-full">
+                            <div class="avatar {{ $otherUser->isOnline() ? 'online' : 'offline' }}">
+                                <div class="w-12 h-12 rounded-full ring-2 ring-base-300">
                                     <img src="{{ $otherUser->avatar_url }}" alt="{{ $otherUser->name }}" />
                                 </div>
                             </div>
 
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center justify-between mb-1">
-                                    <h3 class="font-semibold text-base-content truncate">{{ $otherUser->name }}</h3>
+                                    <h3 class="font-semibold text-base-content truncate flex items-center gap-2">
+                                        {{ $otherUser->name }}
+                                        @if($unreadCount > 0)
+                                            <span class="badge badge-primary badge-sm">{{ $unreadCount }}</span>
+                                        @endif
+                                    </h3>
                                     @if($latestMessage)
                                         <span class="text-xs text-base-content/60">
                                             {{ $latestMessage->created_at->diffForHumans(null, true) }}
@@ -55,21 +64,35 @@
                                     @endif
                                 </div>
 
-                                <div class="flex items-center justify-between">
-                                    <p class="text-sm text-base-content/70 truncate">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-sm text-base-content/70 truncate flex-1">
                                         @if($latestMessage)
                                             @if($latestMessage->user_id === auth()->id())
-                                                <span class="text-base-content/50">You: </span>
+                                                <span class="inline-flex items-center gap-1">
+                                                    @if($latestMessage->read_at)
+                                                        <svg class="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/>
+                                                            <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" transform="translate(4, 0)"/>
+                                                        </svg>
+                                                    @else
+                                                        <svg class="w-3 h-3 text-base-content/50" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M0 11l2-2 5 5L18 3l2 2L7 18z"/>
+                                                        </svg>
+                                                    @endif
+                                                </span>
                                             @endif
-                                            {{ $latestMessage->body ?? '📎 Attachment' }}
+                                            {{ Str::limit($latestMessage->body ?? '📎 Attachment', 35) }}
                                         @else
-                                            <span class="text-base-content/50">No messages yet</span>
+                                            <span class="text-base-content/50 italic">No messages yet</span>
                                         @endif
                                     </p>
+                                </div>
 
-                                    @if($unreadCount > 0)
-                                        <span class="badge badge-primary badge-sm">{{ $unreadCount }}</span>
-                                    @endif
+                                {{-- Typing indicator --}}
+                                <div class="text-xs text-primary flex items-center gap-2 mt-1"
+                                     x-show="typingConversations[{{ $conversation->id }}]"
+                                     x-cloak>
+                                    <span class="loading loading-dots loading-xs"></span>
                                 </div>
                             </div>
                         </div>
@@ -94,33 +117,59 @@
                 @endphp
 
                 <!-- Chat Header -->
-                <div class="p-4 border-b border-base-300 bg-base-200">
+                <div class="p-4 border-b border-base-300 bg-base-100 shadow-sm">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="avatar">
-                                <div class="w-10 h-10 rounded-full">
+                            <div class="avatar {{ $otherUser->isOnline() ? 'online' : 'offline' }}">
+                                <div class="w-10 h-10 rounded-full ring-2 ring-primary ring-offset-2">
                                     <img src="{{ $otherUser->avatar_url }}" alt="{{ $otherUser->name }}" />
                                 </div>
                             </div>
                             <div>
                                 <h3 class="font-semibold text-base-content">{{ $otherUser->name }}</h3>
-                                <p class="text-xs text-base-content/60">{{ $otherUser->email }}</p>
+                                <p class="text-xs text-base-content/60 flex items-center gap-1">
+                                    @if($otherUser->isOnline())
+                                        <span class="w-2 h-2 bg-success rounded-full"></span>
+                                        Active now
+                                    @elseif($otherUser->last_seen)
+                                        Last seen {{ $otherUser->last_seen->diffForHumans() }}
+                                    @else
+                                        Offline
+                                    @endif
+                                </p>
                             </div>
+                          <div class="mb-2 px-1" x-show="activeConversationTyping" x-cloak>
+                            <div class="flex items-center gap-2 text-sm text-base-content/70">
+                              <span class="loading loading-dots loading-xs"></span>
+                            </div>
+                          </div>
                         </div>
 
                         <div class="flex gap-2">
+                            <div class="dropdown dropdown-end">
+                                <label tabindex="0" class="btn btn-ghost btn-sm btn-circle">
+                                    <x-icon name="o-magnifying-glass" class="w-5 h-5" />
+                                </label>
+                                <div tabindex="0" class="dropdown-content z-[1] card card-compact w-80 p-2 shadow-lg bg-base-100 border border-base-300 mt-2">
+                                    <div class="card-body">
+                                        <x-input
+                                            wire:model.live.debounce.300ms="messageSearch"
+                                            placeholder="Search messages..."
+                                            icon="o-magnifying-glass"
+                                            class="input-sm"
+                                        />
+                                        @if($messageSearch)
+                                            <button wire:click="$set('messageSearch', '')" class="btn btn-ghost btn-xs mt-2">
+                                                Clear search
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                             <button class="btn btn-ghost btn-sm btn-circle">
-                                <x-icon name="o-magnifying-glass" class="w-5 h-5" />
+                                <x-icon name="o-ellipsis-vertical" class="w-5 h-5" />
                             </button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Typing Indicator -->
-                <div x-show="isTyping" class="px-4 py-2 bg-base-200 border-b border-base-300" x-cloak>
-                    <div class="flex items-center gap-2 text-sm text-base-content/70">
-                        <span class="loading loading-dots loading-xs"></span>
-                        <span x-text="typingUserName + ' is typing...'"></span>
                     </div>
                 </div>
 
@@ -131,10 +180,63 @@
                     x-init="$el.scrollTop = $el.scrollHeight"
                     @scroll-to-bottom.window="$el.scrollTop = $el.scrollHeight"
                 >
+                    @if($messageSearch)
+                        <div class="alert alert-info shadow-lg mb-4">
+                            <x-icon name="o-magnifying-glass" class="w-5 h-5" />
+                            <span>Searching for: <strong>{{ $messageSearch }}</strong></span>
+                            <button wire:click="$set('messageSearch', '')" class="btn btn-ghost btn-sm btn-circle">
+                                <x-icon name="o-x-mark" class="w-4 h-4" />
+                            </button>
+                        </div>
+                    @endif
+
+                    @php
+                        $lastDate = null;
+                        
+                        // Helper function for Messenger-style time
+                        function messengerTime($datetime) {
+                            $now = now();
+                            $diff = $datetime->diffInSeconds($now);
+                            
+                            if ($diff < 60) {
+                                return 'Just now';
+                            } elseif ($diff < 3600) {
+                                return floor($datetime->diffInMinutes($now)) . 'm';
+                            } elseif ($datetime->isToday()) {
+                                return $datetime->format('g:i A');
+                            } elseif ($datetime->isYesterday()) {
+                                return 'Yesterday ' . $datetime->format('g:i A');
+                            } elseif ($diff < 604800) { // Less than 7 days
+                                return $datetime->format('l g:i A'); // Monday 3:45 PM
+                            } else {
+                                return $datetime->format('M j, g:i A'); // Jan 15, 3:45 PM
+                            }
+                        }
+                    @endphp
+
                     @forelse($this->messages as $message)
                         @php
                             $isOwn = $message->user_id === auth()->id();
+                            $isEdited = !is_null($message->edited_at);
+                            $messageDate = $message->created_at->format('Y-m-d');
+                            $showDateDivider = $lastDate !== $messageDate;
+                            $lastDate = $messageDate;
                         @endphp
+
+                        {{-- Date Divider --}}
+                        @if($showDateDivider)
+                            <div class="flex items-center justify-center my-4">
+                                <div class="px-3 py-1 bg-base-200 rounded-full text-xs text-base-content/70 font-medium shadow-sm">
+                                    @if($message->created_at->isToday())
+                                        Today
+                                    @elseif($message->created_at->isYesterday())
+                                        Yesterday
+                                    @else
+                                        {{ $message->created_at->format('l, F j, Y') }}
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
 
                         <div class="flex {{ $isOwn ? 'justify-end' : 'justify-start' }}" data-message-id="{{ $message->id }}" data-is-own="{{ $isOwn ? 'true' : 'false' }}">
                             <div class="flex gap-2 max-w-[75%] {{ $isOwn ? 'flex-row-reverse' : 'flex-row' }}">
@@ -161,7 +263,13 @@
                                             @endif
 
                                             @if($message->body)
-                                                <p class="text-sm break-words">{{ $message->body }}</p>
+                                                <p class="text-sm break-words">
+                                                    @if($messageSearch && str_contains(strtolower($message->body), strtolower($messageSearch)))
+                                                        {!! preg_replace('/(' . preg_quote($messageSearch, '/') . ')/i', '<mark class="bg-yellow-300 text-black px-1 rounded">$1</mark>', e($message->body)) !!}
+                                                    @else
+                                                        {{ $message->body }}
+                                                    @endif
+                                                </p>
                                             @endif
 
                                             @if($message->attachments->count() > 0)
@@ -208,10 +316,13 @@
                                                 </div>
                                             @endif
 
-                                            <div class="flex items-center gap-1 mt-1">
-                                                <span class="text-xs opacity-70">
-                                                    {{ $message->created_at->format('g:i A') }}
+                                            <div class="flex items-center gap-2 mt-1.5">
+                                                <span class="text-xs opacity-70" title="{{ $message->created_at->format('l, F j, Y \a\t g:i A') }}">
+                                                    {{ messengerTime($message->created_at) }}
                                                 </span>
+                                                @if($isEdited)
+                                                    <span class="text-xs opacity-60 italic">edited</span>
+                                                @endif
                                                 @if($isOwn)
                                                     @if($message->read_at)
                                                         <span class="text-xs text-blue-500" title="Read at {{ $message->read_at->format('g:i A') }}">
@@ -231,29 +342,54 @@
                                             </div>
                                         </div>
 
-                                        <!-- Quick Actions -->
-                                        <div class="absolute {{ $isOwn ? 'left-0' : 'right-0' }} top-0 hidden group-hover:flex gap-1 bg-base-200 rounded-lg shadow-lg p-1">
-                                            <button
-                                                @click="addReaction({{ $message->id }}, '👍')"
-                                                class="btn btn-ghost btn-xs"
-                                            >
-                                                👍
-                                            </button>
-                                            <button
-                                                wire:click="setReplyingTo({{ $message->id }})"
-                                                class="btn btn-ghost btn-xs"
-                                            >
-                                                <x-icon name="o-arrow-uturn-left" class="w-4 h-4" />
-                                            </button>
-                                            @if($isOwn)
-                                                <button
-                                                    wire:click="deleteMessage({{ $message->id }})"
-                                                    wire:confirm="Delete this message?"
-                                                    class="btn btn-ghost btn-xs text-error"
-                                                >
-                                                    <x-icon name="o-trash" class="w-4 h-4" />
-                                                </button>
-                                            @endif
+                                        <!-- Message Actions Dropdown -->
+                                        <div class="dropdown dropdown-end {{ $isOwn ? 'dropdown-left' : 'dropdown-right' }} absolute {{ $isOwn ? '-left-8' : '-right-8' }} top-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <label tabindex="0" class="btn btn-ghost btn-xs btn-circle">
+                                                <x-icon name="o-ellipsis-vertical" class="w-4 h-4" />
+                                            </label>
+                                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300">
+                                                <li>
+                                                    <button @click="addReaction({{ $message->id }}, '👍')" class="text-sm">
+                                                        <span class="text-lg">👍</span> Like
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button @click="addReaction({{ $message->id }}, '❤️')" class="text-sm">
+                                                        <span class="text-lg">❤️</span> Love
+                                                    </button>
+                                                </li>
+                                                <li>
+                                                    <button @click="addReaction({{ $message->id }}, '😂')" class="text-sm">
+                                                        <span class="text-lg">😂</span> Haha
+                                                    </button>
+                                                </li>
+                                                <div class="divider my-0"></div>
+                                                <li>
+                                                    <button wire:click="setReplyingTo({{ $message->id }})" class="text-sm">
+                                                        <x-icon name="o-arrow-uturn-left" class="w-4 h-4" />
+                                                        Reply
+                                                    </button>
+                                                </li>
+                                                @if($isOwn)
+                                                    <li>
+                                                        <button wire:click="editMessage({{ $message->id }})" class="text-sm">
+                                                            <x-icon name="o-pencil" class="w-4 h-4" />
+                                                            Edit
+                                                        </button>
+                                                    </li>
+                                                    <div class="divider my-0"></div>
+                                                    <li>
+                                                        <button
+                                                            wire:click="deleteMessage({{ $message->id }})"
+                                                            wire:confirm="Delete this message?"
+                                                            class="text-sm text-error"
+                                                        >
+                                                            <x-icon name="o-trash" class="w-4 h-4" />
+                                                            Delete
+                                                        </button>
+                                                    </li>
+                                                @endif
+                                            </ul>
                                         </div>
                                     </div>
                                 </div>
@@ -268,13 +404,27 @@
                 </div>
 
                 <!-- Message Input -->
-                <div class="p-4 border-t border-base-300 bg-base-200">
+                <div class="p-4 border-t border-base-300 bg-base-100">
+                    {{-- Editing indicator --}}
+                    @if($editingMessageId)
+                        <div class="mb-2 p-2 bg-warning/10 border-l-4 border-warning rounded-lg flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-sm">
+                                <x-icon name="o-pencil" class="w-4 h-4 text-warning" />
+                                <span class="text-base-content/70">Editing message</span>
+                            </div>
+                            <button wire:click="cancelEdit" class="btn btn-ghost btn-xs btn-circle">
+                                <x-icon name="o-x-mark" class="w-4 h-4" />
+                            </button>
+                        </div>
+                    @endif
+
+                    {{-- Reply indicator --}}
                     @if($replyingTo)
                         @php
                             $replyMessage = $this->messages->firstWhere('id', $replyingTo);
                         @endphp
                         @if($replyMessage)
-                            <div class="mb-2 p-2 bg-base-300 rounded-lg flex items-center justify-between">
+                            <div class="mb-2 p-2 bg-primary/10 border-l-4 border-primary rounded-lg flex items-center justify-between">
                                 <div class="flex items-center gap-2 text-sm">
                                     <x-icon name="o-arrow-uturn-left" class="w-4 h-4 text-primary" />
                                     <span class="text-base-content/70">
@@ -340,12 +490,17 @@
                             ></textarea>
                         </div>
 
-                        <x-button spinner="sendMessage"
-                            type="submit" icon="o-paper-airplane"
-                            class="btn btn-primary btn-circle"
+                        <button
+                            type="submit"
+                            class="btn btn-primary btn-circle shadow-lg"
                             wire:loading.attr="disabled"
                         >
-                        </x-button>
+                            @if($editingMessageId)
+                                <x-icon name="o-check" class="w-5 h-5" />
+                            @else
+                                <x-icon name="o-paper-airplane" class="w-5 h-5" />
+                            @endif
+                        </button>
                     </form>
                 </div>
             @else
@@ -407,14 +562,29 @@
 
     conversationId: @js($selectedConversationId),
     echoChannel: null,
-    isTyping: false,
-    typingUserName: @js($this->otherUser ? $this->otherUser->name : ''),
-    typingTimeout: null,
+    allChannels: {},          // Track all conversation channels
+    conversationIds: @js($this->conversations->pluck('id')->toArray()),
+    conversationUsers: @js($this->conversationUsers),  // Map conversation ID to other user ID
+    typingConversations: {},  // Track typing state per conversation (sidebar)
+    typingTimeouts: {},       // Track timeouts per conversation
+    activeConversationTyping: false,  // Typing state for active conversation
+    activeTypingUserName: '',         // User name typing in active conversation
+    activeTypingTimeout: null,        // Timeout for active conversation typing
 
     init() {
       console.log('🚀 Chat app initialized, conversation:', this.conversationId);
+      console.log('📋 All conversations:', this.conversationIds);
+      console.log('👥 Conversation users map:', this.conversationUsers);
 
-      // Setup Echo listener for real-time updates
+      // Initialize typing state for all conversations
+      this.conversationIds.forEach(convId => {
+        this.typingConversations[convId] = false;
+      });
+
+      // Setup Echo listeners for ALL conversations
+      this.setupAllConversationChannels();
+
+      // Setup Echo listener for active conversation
       this.setupEcho();
 
       // Listen for conversation changes
@@ -422,20 +592,30 @@
         console.log('📱 Conversation selected:', data.conversationId);
         this.conversationId = data.conversationId;
 
-        // Leave old channel and join new one
-        if (this.echoChannel) {
-          Echo.leave(`chat.${this.conversationId}`);
-        }
+        // Switch to the new conversation channel
         this.setupEcho();
+        
+        // After switching channel, whisper read status if needed
+        setTimeout(() => {
+          if (this.echoChannel) {
+            this.echoChannel.whisper('read', {
+              conversationId: this.conversationId,
+              readBy: {{ auth()->id() }},
+              readAt: Date.now()
+            });
+            console.log('✅ Whispered read status for new conversation');
+          }
+        }, 500);
       });
 
       // Listen for message sent event
       Livewire.on('message-sent', (data) => {
         console.log('📨 Message sent, whispering to other user...');
+
         this.whisperNewMessage(data.messageId);
       });
 
-      // Listen for messages marked as read
+      // Listen for messages marked as read (for current conversation)
       Livewire.on('messages-marked-read', () => {
         console.log('✓✓ Messages marked as read, whispering...');
         if (this.echoChannel) {
@@ -448,6 +628,74 @@
       });
     },
 
+    setupAllConversationChannels() {
+      if (!window.Echo) {
+        console.warn('⚠️ Echo not available');
+        return;
+      }
+
+      console.log('🔌 Setting up channels for all conversations');
+
+      // Subscribe to all conversation channels for typing indicators
+      this.conversationIds.forEach(convId => {
+        const channelName = `chat.${convId}`;
+        console.log('📡 Subscribing to:', channelName);
+
+        const channel = Echo.private(channelName);
+        this.allChannels[convId] = channel;
+
+        channel.listenForWhisper('typing', (e) => {
+          console.log(`⌨️ Typing in conversation ${convId}:`, e);
+          this.handleTypingForConversation(convId, e);
+        });
+      });
+    },
+
+    handleTypingForConversation(conversationId, e) {
+      console.log(`📥 Typing event for conversation ${conversationId}:`, e);
+
+      // Find which conversation this user belongs to
+      const targetConversationId = Object.keys(this.conversationUsers).find(
+        convId => this.conversationUsers[convId] == e.userId
+      );
+
+      if (!targetConversationId) {
+        console.log('⚠️ User not found in any conversation');
+        return;
+      }
+
+      console.log(`✅ Found user ${e.userId} in conversation ${targetConversationId}`);
+
+      // Update typing state for sidebar
+      this.typingConversations[targetConversationId] = true;
+
+      // Clear existing timeout for this conversation
+      if (this.typingTimeouts[targetConversationId]) {
+        clearTimeout(this.typingTimeouts[targetConversationId]);
+      }
+
+      // Hide sidebar typing indicator after 3 seconds
+      this.typingTimeouts[targetConversationId] = setTimeout(() => {
+        this.typingConversations[targetConversationId] = false;
+        console.log(`⏱️ Sidebar typing indicator hidden for conversation ${targetConversationId}`);
+      }, 3000);
+
+      // If this is the active conversation, also show typing above input
+      if (targetConversationId == this.conversationId) {
+        this.activeConversationTyping = true;
+        this.activeTypingUserName = e.userName;
+
+        if (this.activeTypingTimeout) {
+          clearTimeout(this.activeTypingTimeout);
+        }
+
+        this.activeTypingTimeout = setTimeout(() => {
+          this.activeConversationTyping = false;
+          console.log('⏱️ Active conversation typing indicator hidden');
+        }, 3000);
+      }
+    },
+
     setupEcho() {
       if (!window.Echo || !this.conversationId) {
         console.warn('⚠️ Echo not available or no conversation selected');
@@ -457,33 +705,77 @@
       console.log('🔌 Setting up Echo for conversation:', this.conversationId);
 
       const channelName = `chat.${this.conversationId}`;
-      this.echoChannel = Echo.private(channelName);
+      
+      // Use the existing channel from allChannels (already has typing listener)
+      // This prevents duplicate subscriptions
+      this.echoChannel = this.allChannels[this.conversationId];
 
+      // Add additional listeners for active conversation only
+      // Note: These will stack up, but Echo handles duplicate listeners gracefully
       this.echoChannel
         .listenForWhisper('new-message', (e) => {
           console.log('📨 New message (whisper):', e);
-          this.refreshMessages();
+
+          // Only refresh if sender is the other user in this conversation
+          const otherUserId = this.conversationUsers[this.conversationId];
+          if (e.senderId == otherUserId) {
+            console.log('✅ Message from conversation user, refreshing...');
+            this.refreshMessages();
+          } else {
+            this.$wire.call('getConversationsProperty');
+          }
         })
         .listen('.MessageUpdated', (e) => {
           console.log('✏️ Message updated:', e);
-          this.refreshMessages();
+
+          // Only refresh if message is from the other user in this conversation
+          const otherUserId = this.conversationUsers[this.conversationId];
+          if (e.message.user_id == otherUserId) {
+            console.log('✅ Update from conversation user, refreshing...');
+            this.refreshMessages();
+          } else {
+            this.$wire.call('getConversationsProperty');
+          }
         })
         .listen('.MessageDeleted', (e) => {
           console.log('🗑️ Message deleted:', e);
-          this.refreshMessages();
+
+          // Only refresh if message was from the other user in this conversation
+          const otherUserId = this.conversationUsers[this.conversationId];
+          if (e.userId == otherUserId) {
+            console.log('✅ Delete from conversation user, refreshing...');
+            this.refreshMessages();
+          } else {
+            this.$wire.call('getConversationsProperty');
+          }
+        })
+        .listenForWhisper('reaction', (e) => {
+          console.log('😊 Reaction (whisper):', e);
+
+          // Only refresh if reaction is from the other user in this conversation
+          const otherUserId = this.conversationUsers[this.conversationId];
+          if (e.userId == otherUserId) {
+            console.log('✅ Reaction from conversation user, refreshing...');
+            this.handleWhisperReaction(e);
+          } else {
+            this.$wire.call('getConversationsProperty');
+          }
+        })
+        .listenForWhisper('read', (e) => {
+          console.log('👁️ Messages read (whisper):', e);
+
+          // Only refresh if read by the other user in this conversation
+          const otherUserId = this.conversationUsers[this.conversationId];
+          if (e.readBy == otherUserId) {
+            console.log('✅ Read by conversation user, refreshing...');
+            this.$wire.$refresh();
+          } else {
+            this.$wire.call('getConversationsProperty');
+          }
         })
         .listenForWhisper('typing', (e) => {
           console.log('⌨️ User typing (whisper):', e);
           this.handleWhisperTyping(e);
-        })
-        .listenForWhisper('reaction', (e) => {
-          console.log('😊 Reaction (whisper):', e);
-          this.handleWhisperReaction(e);
-        })
-        .listenForWhisper('read', (e) => {
-          console.log('👁️ Messages read (whisper):', e);
-          // Just refresh UI to show blue checkmarks
-          this.$wire.$refresh();
         });
 
       // Log subscription events
@@ -504,7 +796,7 @@
       // Scroll to bottom after refresh
       setTimeout(() => {
         this.scrollToBottom();
-      }, 200);
+      }, 1000);
     },
 
     handleMessageSent() {
@@ -525,13 +817,14 @@
     whisperTyping() {
       if (!this.echoChannel) return;
 
-      // Send whisper to other users
+      // Send whisper to other users with user ID
       this.echoChannel.whisper('typing', {
         typing: true,
+        userId: {{ auth()->id() }},
         userName: '{{ auth()->user()->name }}'
       });
 
-      console.log('📤 Whispered typing event');
+      console.log('📤 Whispered typing event with userId:', {{ auth()->id() }});
     },
 
     whisperNewMessage(messageId) {
@@ -551,21 +844,11 @@
     },
 
     handleWhisperTyping(e) {
-      console.log('📥 Received whisper typing:', e);
-
-      // Show typing indicator
-      this.isTyping = true;
-
-      // Clear existing timeout
-      if (this.typingTimeout) {
-        clearTimeout(this.typingTimeout);
+      // This is now handled by handleTypingForConversation
+      // Keep for backward compatibility
+      if (this.conversationId) {
+        this.handleTypingForConversation(this.conversationId, e);
       }
-
-      // Hide typing indicator after 3 seconds
-      this.typingTimeout = setTimeout(() => {
-        this.isTyping = false;
-        console.log('⏱️ Typing indicator hidden');
-      }, 3000);
     },
 
     addReaction(messageId, emoji) {
@@ -590,12 +873,24 @@
     },
 
     destroy() {
+      // Leave active conversation channel
       if (this.echoChannel) {
         console.log('👋 Leaving channel:', this.conversationId);
         Echo.leave(`chat.${this.conversationId}`);
       }
-      if (this.typingTimeout) {
-        clearTimeout(this.typingTimeout);
+
+      // Leave all conversation channels
+      Object.keys(this.allChannels).forEach(convId => {
+        console.log('👋 Leaving channel:', convId);
+        Echo.leave(`chat.${convId}`);
+      });
+
+      // Clear all timeouts
+      Object.values(this.typingTimeouts).forEach(timeout => {
+        clearTimeout(timeout);
+      });
+      if (this.activeTypingTimeout) {
+        clearTimeout(this.activeTypingTimeout);
       }
     }
   }));

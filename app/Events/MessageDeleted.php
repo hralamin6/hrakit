@@ -17,6 +17,7 @@ class MessageDeleted implements ShouldBroadcast
 
     public $messageId;
     public $conversationId;
+    public $userId;
 
     /**
      * Create a new event instance.
@@ -25,6 +26,7 @@ class MessageDeleted implements ShouldBroadcast
     {
         $this->messageId = $message->id;
         $this->conversationId = $message->conversation_id;
+        $this->userId = $message->user_id;
     }
 
     /**
@@ -54,6 +56,7 @@ class MessageDeleted implements ShouldBroadcast
     {
         return [
             'messageId' => $this->messageId,
+            'userId' => $this->userId,
         ];
     }
 }

@@ -28,6 +28,7 @@ class ChatComponent extends Component
     public $body = '';
     public $attachments = [];
     public $replyingTo = null;
+    public $editingMessageId = null;
 
     protected $rules = [
         'body' => 'required_without:attachments|string|max:5000',
@@ -58,17 +59,40 @@ class ChatComponent extends Component
 
     public function getConversationsProperty()
     {
+        $userId = auth()->id();
+        
         return auth()->user()
             ->conversations()
             ->with(['userOne', 'userTwo', 'latestMessage.user'])
-            ->when($this->search, function ($query) {
-                $query->whereHas('userOne', function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                })->orWhereHas('userTwo', function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
+            ->when($this->search, function ($query) use ($userId) {
+                $searchTerm = '%' . $this->search . '%';
+                $query->where(function($q) use ($userId, $searchTerm) {
+                    // Search in the OTHER user's name (not the current user)
+                    $q->where(function($subQ) use ($userId, $searchTerm) {
+                        $subQ->where('user_one_id', '!=', $userId)
+                             ->whereHas('userOne', function($userQ) use ($searchTerm) {
+                                 $userQ->where('name', 'like', $searchTerm)
+                                       ->orWhere('email', 'like', $searchTerm);
+                             });
+                    })->orWhere(function($subQ) use ($userId, $searchTerm) {
+                        $subQ->where('user_two_id', '!=', $userId)
+                             ->whereHas('userTwo', function($userQ) use ($searchTerm) {
+                                 $userQ->where('name', 'like', $searchTerm)
+                                       ->orWhere('email', 'like', $searchTerm);
+                             });
+                    });
                 });
             })
+            ->orderBy('updated_at', 'desc')
             ->get();
+    }
+
+    public function getConversationUsersProperty()
+    {
+        // Map conversation ID to other user ID
+        return $this->conversations->mapWithKeys(function ($conversation) {
+            return [$conversation->id => $conversation->getOtherUser(auth()->id())->id];
+        })->toArray();
     }
 
     public function getMessagesProperty()
@@ -95,8 +119,10 @@ class ChatComponent extends Component
         $this->replyingTo = null;
         $this->resetPage();
         $this->markAsRead();
-        $this->markUnreadMessagesAsRead();
         $this->dispatch('conversationSelected', conversationId: $conversationId);
+      $this->markUnreadMessagesAsRead();
+
+
     }
 
     public function startNewChat($userId)
@@ -110,6 +136,12 @@ class ChatComponent extends Component
 
     public function sendMessage()
     {
+        // If editing, update instead
+        if ($this->editingMessageId) {
+            $this->updateMessage();
+            return;
+        }
+
         $this->validate();
 
         if (!$this->selectedConversationId) {
@@ -178,6 +210,42 @@ class ChatComponent extends Component
         $this->replyingTo = null;
     }
 
+    public function editMessage($messageId)
+    {
+        $message = Message::find($messageId);
+        
+        if ($message && $message->user_id === auth()->id()) {
+            $this->editingMessageId = $messageId;
+            $this->body = $message->body;
+        }
+    }
+
+    public function cancelEdit()
+    {
+        $this->editingMessageId = null;
+        $this->body = '';
+    }
+
+    public function updateMessage()
+    {
+        if (!$this->editingMessageId) {
+            return;
+        }
+
+        $message = Message::find($this->editingMessageId);
+        
+        if ($message && $message->user_id === auth()->id()) {
+            $message->update([
+                'body' => $this->body,
+                'edited_at' => now()
+            ]);
+
+            broadcast(new \App\Events\MessageUpdated($message))->toOthers();
+            
+            $this->cancelEdit();
+        }
+    }
+
     public function deleteMessage($messageId)
     {
         $message = Message::find($messageId);
@@ -198,10 +266,6 @@ class ChatComponent extends Component
     {
         // Mark unread messages as read when refreshing
         $this->markUnreadMessagesAsRead();
-//        $this->getConversationsProperty();
-
-        // Trigger a re-render
-        $this->dispatch('messagesRefreshed');
     }
 
     public function refreshConversations()
@@ -216,7 +280,9 @@ class ChatComponent extends Component
         }
 
         // Mark all unread messages in this conversation as read
-        $updated = Message::where('conversation_id', $this->selectedConversationId)
+        // Use DB::table to prevent updated_at from changing
+        $updated = \DB::table('messages')
+            ->where('conversation_id', $this->selectedConversationId)
             ->where('user_id', '!=', auth()->id())
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
